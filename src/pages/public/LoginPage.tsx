@@ -1,16 +1,17 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { ROUTES, APP_NAME } from '@/lib/constants'
 import { useAuthStore } from '@/store/auth.store'
-import { mockAdminUser, mockClients } from '@/data'
+import { mockAdminUser, mockClients, mockStaffUser } from '@/data'
+import type { UserRole } from '@/types'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const login = useAuthStore((s) => s.login)
 
-  function handleMockLogin(role: 'admin' | 'client') {
-    const user = role === 'admin' ? mockAdminUser : mockClients[0]
+  function handleMockLogin(role: UserRole) {
+    const user = role === 'admin' ? mockAdminUser : role === 'staff' ? mockStaffUser : mockClients[0]
     login(user, 'mock-token-' + role)
-    navigate(role === 'admin' ? ROUTES.ADMIN.DASHBOARD : ROUTES.CLIENT.DASHBOARD)
+    navigate(role === 'admin' ? ROUTES.ADMIN.DASHBOARD : role === 'staff' ? ROUTES.SCANNER : ROUTES.CLIENT.DASHBOARD)
   }
 
   return (
@@ -39,6 +40,13 @@ export default function LoginPage() {
             className="w-full py-2.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
           >
             Entrar como Cliente
+          </button>
+
+          <button
+            onClick={() => handleMockLogin('staff')}
+            className="w-full py-2.5 rounded-md border border-border bg-background text-foreground hover:bg-secondary transition-colors text-sm font-medium"
+          >
+            Entrar como Leitor QR
           </button>
         </div>
 

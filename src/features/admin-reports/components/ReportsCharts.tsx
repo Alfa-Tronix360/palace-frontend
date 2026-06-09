@@ -2,6 +2,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend,
 } from 'recharts'
+import { mockReservations } from '@/data/mock-reservations'
+import { useVenueStore } from '@/store/venue.store'
 
 const tooltip = {
   backgroundColor: '#232323',
@@ -112,6 +114,76 @@ export function TopProductsReport() {
           <Legend formatter={v => <span style={{ color: '#A89A85', fontSize: 11 }}>{v}</span>} />
         </PieChart>
       </ResponsiveContainer>
+    </div>
+  )
+}
+
+export function TopReservedTablesReport() {
+  const tableData = mockReservations
+    .reduce<Array<{ name: string; reservas: number }>>((acc, reservation) => {
+      const name = `Mesa ${reservation.tableNumber}`
+      const item = acc.find((entry) => entry.name === name)
+      if (item) item.reservas += 1
+      else acc.push({ name, reservas: 1 })
+      return acc
+    }, [])
+    .sort((a, b) => b.reservas - a.reservas)
+    .slice(0, 6)
+
+  return (
+    <div className="rounded-xl border border-border/40 bg-surface p-5">
+      <p className="text-sm font-semibold text-foreground mb-1">Mesas mais Reservadas</p>
+      <p className="text-xs text-muted-foreground mb-4">Ranking por numero de reservas</p>
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={tableData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+          <XAxis dataKey="name" tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <Tooltip contentStyle={tooltip} />
+          <Bar dataKey="reservas" name="Reservas" fill="#D9D0B5" radius={[3,3,0,0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+export function TableTicketRevenueReport() {
+  const tickets = useVenueStore((state) => state.tickets)
+  const tableData = tickets
+    .reduce<Array<{ name: string; receita: number; convites: number }>>((acc, ticket) => {
+      const name = `Mesa ${ticket.tableNumber}`
+      const item = acc.find((entry) => entry.name === name)
+      if (item) {
+        item.receita += ticket.price
+        item.convites += 1
+      } else {
+        acc.push({ name, receita: ticket.price, convites: 1 })
+      }
+      return acc
+    }, [])
+    .sort((a, b) => b.receita - a.receita)
+    .slice(0, 6)
+
+  return (
+    <div className="rounded-xl border border-border/40 bg-surface p-5">
+      <p className="text-sm font-semibold text-foreground mb-1">Mesas mais Vendidas</p>
+      <p className="text-xs text-muted-foreground mb-4">Receita de convites digitais por mesa</p>
+      {tableData.length ? (
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={tableData} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+            <XAxis type="number" tickFormatter={v => `${(Number(v)/1000).toFixed(0)}K`}
+              tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
+            <YAxis type="category" dataKey="name" tick={{ fill: '#A89A85', fontSize: 10 }} axisLine={false} tickLine={false} width={90} />
+            <Tooltip contentStyle={tooltip} formatter={(v, name) => name === 'receita' ? [`${(Number(v)/1000).toFixed(0)}K AOA`, 'Receita'] : [v, 'Convites']} />
+            <Bar dataKey="receita" name="Receita" fill="#B89A67" radius={[0,3,3,0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex h-[220px] items-center justify-center rounded-lg border border-border bg-background text-sm text-muted-foreground">
+          As vendas por mesa aparecem depois da primeira compra de convite.
+        </div>
+      )}
     </div>
   )
 }

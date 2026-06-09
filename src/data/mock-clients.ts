@@ -124,3 +124,15 @@ export const mockAdminUser: User = {
   reservationCount: 0,
   createdAt: new Date('2023-01-01'),
 }
+
+export const mockStaffUser: User = {
+  id: 'staff-1',
+  name: 'Validador Palace',
+  email: 'scanner@palacelounge.ao',
+  phone: '+244 941 805 698',
+  role: 'staff',
+  vip: false,
+  totalSpent: 0,
+  reservationCount: 0,
+  createdAt: new Date('2024-01-01'),
+}

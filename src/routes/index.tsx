@@ -29,6 +29,7 @@ const GalleryPage = lazy(() => import('@/pages/public/GalleryPage'))
 const ContactsPage = lazy(() => import('@/pages/public/ContactsPage'))
 const LoginPage = lazy(() => import('@/pages/public/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/public/RegisterPage'))
+const ScannerPage = lazy(() => import('@/pages/staff/ScannerPage'))
 
 // ─── Páginas do cliente ───────────────────────────────────────────────────────
 const ClientDashboardPage = lazy(() => import('@/pages/client/ClientDashboardPage'))
@@ -39,6 +40,7 @@ const ClientProfilePage = lazy(() => import('@/pages/client/ClientProfilePage'))
 // ─── Páginas de admin ─────────────────────────────────────────────────────────
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'))
 const AdminReservationsPage = lazy(() => import('@/pages/admin/AdminReservationsPage'))
+const AdminTablesPage = lazy(() => import('@/pages/admin/AdminTablesPage'))
 const AdminClientsPage = lazy(() => import('@/pages/admin/AdminClientsPage'))
 const AdminEventsPage = lazy(() => import('@/pages/admin/AdminEventsPage'))
 const AdminMenuPage = lazy(() => import('@/pages/admin/AdminMenuPage'))
@@ -71,11 +73,16 @@ export const router = createBrowserRouter([
     ],
   },
   {
+    path: '/scanner',
+    element: wrap(ScannerPage),
+  },
+  {
     path: '/admin',
     element: <AdminLayout />,
     children: [
       { index: true, element: wrap(AdminDashboardPage) },
       { path: 'reservas', element: wrap(AdminReservationsPage) },
+      { path: 'mesas', element: wrap(AdminTablesPage) },
       { path: 'clientes', element: wrap(AdminClientsPage) },
       { path: 'eventos', element: wrap(AdminEventsPage) },
       { path: 'cardapio', element: wrap(AdminMenuPage) },

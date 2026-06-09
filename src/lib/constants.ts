@@ -6,6 +6,7 @@ export const ROUTES = {
   CONTACTS: '/contactos',
   LOGIN: '/login',
   REGISTER: '/registo',
+  SCANNER: '/scanner',
   CLIENT: {
     DASHBOARD: '/cliente',
     RESERVATIONS: '/cliente/reservas',
@@ -15,6 +16,7 @@ export const ROUTES = {
   ADMIN: {
     DASHBOARD: '/admin',
     RESERVATIONS: '/admin/reservas',
+    TABLES: '/admin/mesas',
     CLIENTS: '/admin/clientes',
     EVENTS: '/admin/eventos',
     MENU: '/admin/cardapio',

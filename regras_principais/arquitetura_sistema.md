@@ -930,3 +930,69 @@ Fase 3.1 (layout cliente) ←── bloqueante para módulos 3.x
     ↓
 Módulos 3.2 → 3.4 (sequenciais — wizard precede a área do cliente)
 ```
+# Backend Futuro - Requisitos Operacionais
+
+O frontend continua mock-first. A equipa do backend deve entregar APIs estaveis para substituir os adapters sem mudar componentes.
+
+Papeis obrigatorios: `admin`, `client` e `staff`. O papel `staff` e a conta operacional que valida QR codes na entrada.
+
+O backend deve cobrir:
+
+- autenticacao com login, refresh token, logout, RBAC e auditoria;
+- areas geometricas editaveis do mapa do Palace;
+- mesas dentro de areas, com posicao x/y, status, capacidade, zona, imagem e descricao;
+- reservas com bloqueio contra dupla marcacao de mesa no mesmo horario;
+- eventos privados solicitados por cliente;
+- eventos publicados pelo admin para venda de convites digitais;
+- snapshot dos lugares de cada evento publicado;
+- compra de convite com QR code unico;
+- validacao de QR por staff, com historico de leitura;
+- relatorios de receita, top clientes, mesas mais reservadas, mesas mais vendidas, receita por mesa, ocupacao por area e validacoes por evento.
+
+Endpoints esperados:
+
+```txt
+POST /auth/login
+POST /auth/refresh
+POST /auth/logout
+GET  /auth/me
+
+GET    /venue/areas
+POST   /venue/areas
+PATCH  /venue/areas/:id
+DELETE /venue/areas/:id
+
+GET    /venue/tables
+POST   /venue/tables
+PATCH  /venue/tables/:id
+DELETE /venue/tables/:id
+GET    /venue/tables/availability?date=&time=&guests=
+
+GET    /reservations
+POST   /reservations
+PATCH  /reservations/:id
+POST   /reservations/:id/cancel
+POST   /reservations/:id/confirm
+
+GET    /published-events
+POST   /published-events
+PATCH  /published-events/:id
+POST   /published-events/:id/publish
+POST   /published-events/:id/unpublish
+GET    /published-events/:id/seats
+
+POST /tickets/purchase
+GET  /tickets/my
+POST /tickets/validate
+GET  /tickets/scan-history
+
+GET /reports/revenue?from=&to=
+GET /reports/top-clients?from=&to=
+GET /reports/tables/reservations?from=&to=
+GET /reports/tables/ticket-sales?from=&to=
+GET /reports/areas/occupancy?from=&to=
+GET /reports/events/sales?from=&to=
+GET /reports/tickets/validation?eventId=
+```
+
+---

@@ -1,6 +1,6 @@
 /* ─── Utilizadores ───────────────────────────────────────────────────────── */
 
-export type UserRole = 'admin' | 'client'
+export type UserRole = 'admin' | 'client' | 'staff'
 
 export interface User {
   id: string
@@ -27,6 +27,68 @@ export interface Table {
   location: TableLocation
   status: TableStatus
   description?: string
+  x?: number
+  y?: number
+  areaId?: string
+  priceTier?: 'standard' | 'premium' | 'vip'
+  imageUrl?: string
+}
+
+export type VenueAreaShape = 'rectangle' | 'circle'
+
+export interface VenueArea {
+  id: string
+  name: string
+  shape: VenueAreaShape
+  x: number
+  y: number
+  width: number
+  height: number
+  color: string
+  ticketPrice: number
+  description?: string
+}
+
+export type TicketSeatStatus = 'available' | 'sold' | 'blocked'
+
+export interface TicketSeat {
+  id: string
+  tableId: string
+  tableNumber: number
+  x: number
+  y: number
+  capacity: number
+  location: TableLocation
+  price: number
+  status: TicketSeatStatus
+}
+
+export interface PublishedEvent {
+  id: string
+  title: string
+  date: Date
+  time: string
+  description: string
+  stageLabel: string
+  bannerUrl?: string
+  basePrice: number
+  published: boolean
+  seats: TicketSeat[]
+  createdAt: Date
+}
+
+export interface DigitalTicket {
+  id: string
+  eventId: string
+  clientId: string
+  clientName: string
+  seatId: string
+  tableNumber: number
+  price: number
+  qrCode: string
+  status: 'valid' | 'used' | 'cancelled'
+  usedAt?: Date
+  purchasedAt: Date
 }
 
 /* ─── Reservas ───────────────────────────────────────────────────────────── */
