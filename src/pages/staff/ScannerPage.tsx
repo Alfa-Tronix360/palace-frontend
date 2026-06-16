@@ -33,7 +33,6 @@ export default function ScannerPage() {
   })
 
   const registerWalkInClient = useVenueStore((state) => state.registerWalkInClient)
-  const reserveTableForWalkIn = useVenueStore((state) => state.reserveTableForWalkIn)
   const reservations = useVenueStore((state) => state.walkInReservations)
   const clients = useVenueStore((state) => state.walkInClients)
 
