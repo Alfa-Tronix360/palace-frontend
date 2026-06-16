@@ -1,15 +1,22 @@
 import { motion } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import { ClientsTable } from '@/features/admin-clients/components/ClientsTable'
-import { mockClients }  from '@/data'
-
-const stats = [
-  { label: 'Total',          value: mockClients.length,                               color: 'text-foreground' },
-  { label: 'VIP',            value: mockClients.filter(c => c.vip).length,             color: 'text-accent' },
-  { label: 'Novos este mês', value: 3,                                                 color: 'text-success' },
-  { label: 'Inativos',       value: mockClients.filter(c => c.reservationCount === 0).length, color: 'text-muted-foreground' },
-]
+import { clientsAdapter } from '@/services/adapters/clients.adapter'
 
 export default function AdminClientsPage() {
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => clientsAdapter.getAll(),
+  })
+
+  const now = new Date()
+  const stats = [
+    { label: 'Total', value: clients.length, color: 'text-foreground' },
+    { label: 'VIP', value: clients.filter(c => c.vip).length, color: 'text-accent' },
+    { label: 'Novos este mês', value: clients.filter(c => { const d = new Date(c.createdAt); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() }).length, color: 'text-success' },
+    { label: 'Inativos', value: clients.filter(c => c.reservationCount === 0).length, color: 'text-muted-foreground' },
+  ]
+
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>

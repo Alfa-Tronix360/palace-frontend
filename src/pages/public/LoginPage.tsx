@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ROUTES, APP_NAME } from '@/lib/constants'
 import { useAuthStore } from '@/store/auth.store'
@@ -8,10 +9,37 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const login = useAuthStore((s) => s.login)
 
+  const [email, setEmail] = useState('')
+  const [senha, setSenha] = useState('')
+  const [erro, setErro] = useState('')
+  const [loading, setLoading] = useState(false)
+
   function handleMockLogin(role: UserRole) {
     const user = role === 'admin' ? mockAdminUser : role === 'staff' ? mockStaffUser : mockClients[0]
     login(user, 'mock-token-' + role)
     navigate(role === 'admin' ? ROUTES.ADMIN.DASHBOARD : role === 'staff' ? ROUTES.SCANNER : ROUTES.CLIENT.DASHBOARD)
+  }
+
+  async function handleRealLogin() {
+    if (!email || !senha) return setErro('Preencha o email e a senha')
+    setErro('')
+    setLoading(true)
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || 'Erro ao entrar')
+      login(data.user, data.access_token)
+      const role = data.user.role
+      navigate(role === 'admin' ? ROUTES.ADMIN.DASHBOARD : role === 'staff' ? ROUTES.SCANNER : ROUTES.CLIENT.DASHBOARD)
+    } catch (e: any) {
+      setErro(e.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -22,8 +50,41 @@ export default function LoginPage() {
           <p className="text-muted-foreground mt-2 text-sm">Aceda à sua conta</p>
         </div>
 
+        {/* Formulário real */}
         <div className="rounded-xl border border-border bg-surface p-6 space-y-4">
-          {/* Formulário real — Fase 1.4 */}
+          <p className="text-xs text-center text-muted-foreground pb-2 border-b border-border">
+            Entrar com conta real
+          </p>
+
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-md border border-border bg-background text-sm outline-none focus:ring-1 focus:ring-primary"
+          />
+          <input
+            type="password"
+            placeholder="Senha"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleRealLogin()}
+            className="w-full px-3 py-2.5 rounded-md border border-border bg-background text-sm outline-none focus:ring-1 focus:ring-primary"
+          />
+
+          {erro && <p className="text-red-500 text-xs text-center">{erro}</p>}
+
+          <button
+            onClick={handleRealLogin}
+            disabled={loading}
+            className="w-full py-2.5 rounded-md bg-accent text-accent-foreground hover:bg-accent/90 transition-colors text-sm font-medium disabled:opacity-50"
+          >
+            {loading ? 'A entrar...' : 'Entrar'}
+          </button>
+        </div>
+
+        {/* Botões mock */}
+        <div className="rounded-xl border border-border bg-surface p-6 space-y-4">
           <p className="text-xs text-center text-muted-foreground pb-2 border-b border-border">
             Acesso rápido (mock — desenvolvimento)
           </p>

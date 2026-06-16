@@ -8,6 +8,8 @@ import { useAuthStore } from '@/store/auth.store'
 import { useVenueStore } from '@/store/venue.store'
 import { useClientEvents, useCreateClientEvent } from '@/features/client/hooks/useClientArea'
 import type { DigitalTicket, Event, EventType, PublishedEvent, TicketSeat, VenueArea } from '@/types'
+import { useQuery, useMutation } from '@tanstack/react-query'
+import { http } from '@/services/api/http'
 
 const eventTypes: EventType[] = ['birthday', 'wedding', 'corporate', 'private_dinner', 'themed']
 
@@ -222,24 +224,40 @@ function TicketMap({
 function TicketSales() {
   const user = useAuthStore((state) => state.user)
   const areas = useVenueStore((state) => state.areas)
-  const publishedEvents = useVenueStore((state) => state.publishedEvents)
-  const tickets = useVenueStore((state) => state.tickets)
-  const buyTicket = useVenueStore((state) => state.buyTicket)
-  const visibleEvents = publishedEvents.filter((event) => event.published)
-  const [selectedEventId, setSelectedEventId] = useState(visibleEvents[0]?.id)
-  const selectedEvent = visibleEvents.find((event) => event.id === selectedEventId) ?? visibleEvents[0]
-  const [selectedSeat, setSelectedSeat] = useState<TicketSeat | null>(null)
-  const clientTickets = user ? tickets.filter((ticket) => ticket.clientId === user.id) : []
+
+  const { data: publishedEvents = [] } = useQuery({
+    queryKey: ['published-events'],
+    queryFn: () => http.get<unknown, any[]>('/published-events'),
+  })
+
+  const { data: myTickets = [], refetch: refetchTickets } = useQuery({
+    queryKey: ['my-tickets'],
+    queryFn: async () => {
+      const data = await http.get<unknown, any[]>('/tickets/my')
+      console.log('tickets:', data)
+      return data
+    },
+  })
+
+  const buyTicketMutation = useMutation({
+    mutationFn: ({ eventId, seatId }: { eventId: number; seatId: number }) =>
+      http.post<unknown, any>('/tickets/purchase', { event_id: eventId, seat_id: seatId }),
+    onSuccess: () => {
+      refetchTickets()
+      toast.success('Convite comprado com sucesso!')
+      setSelectedSeat(null)
+    },
+    onError: () => toast.error('Este lugar ja nao esta disponivel.'),
+  })
+
+  const visibleEvents = publishedEvents.filter((e: any) => e.published)
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(visibleEvents[0]?.id ?? null)
+  const [selectedSeat, setSelectedSeat] = useState<any>(null)
+  const selectedEvent = visibleEvents.find((e: any) => e.id === selectedEventId) ?? visibleEvents[0]
 
   function handleBuy() {
     if (!user || !selectedEvent || !selectedSeat) return
-    try {
-      const ticket = buyTicket(selectedEvent.id, selectedSeat.id, user.id, user.name, user.phone)
-      toast.success(ticket.whatsappUrl ? 'Convite comprado. Envie o QR pelo WhatsApp.' : 'Convite digital comprado.')
-      setSelectedSeat(null)
-    } catch {
-      toast.error('Este lugar ja nao esta disponivel.')
-    }
+    buyTicketMutation.mutate({ eventId: selectedEvent.id, seatId: selectedSeat.id })
   }
 
   return (
@@ -254,28 +272,40 @@ function TicketSales() {
       {visibleEvents.length ? (
         <div className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
           <div className="space-y-3">
-            {visibleEvents.map((event) => (
-              <button
-                key={event.id}
-                type="button"
-                onClick={() => {
-                  setSelectedEventId(event.id)
-                  setSelectedSeat(null)
-                }}
-                className={cn(
-                  'w-full rounded-xl border p-4 text-left transition-colors',
-                  selectedEvent?.id === event.id ? 'border-primary bg-primary/10' : 'border-border bg-surface hover:border-primary/50'
-                )}
-              >
+            {visibleEvents.map((event: any) => (
+              <button key={event.id} type="button"
+                onClick={() => { setSelectedEventId(event.id); setSelectedSeat(null) }}
+                className={cn('w-full rounded-xl border p-4 text-left transition-colors',
+                  selectedEvent?.id === event.id ? 'border-primary bg-primary/10' : 'border-border bg-surface hover:border-primary/50')}>
                 <p className="font-medium">{event.title}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{formatDate(event.date)} | {event.time}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{formatDate(new Date(event.date))} | {event.time}</p>
               </button>
             ))}
           </div>
 
           {selectedEvent && (
             <div className="space-y-3">
-              <TicketMap areas={areas} event={selectedEvent} selectedSeatId={selectedSeat?.id} onSelect={setSelectedSeat} />
+              <TicketMap
+                areas={areas}
+                event={{
+                  ...selectedEvent,
+                  date: new Date(selectedEvent.date),
+                  createdAt: new Date(selectedEvent.created_at),
+                  seats: (selectedEvent.seats ?? []).map((s: any) => ({
+                    id: String(s.id),
+                    tableId: String(s.table_id),
+                    tableNumber: s.table_number,
+                    x: s.x ?? 20,
+                    y: s.y ?? 40,
+                    capacity: s.capacity,
+                    location: s.location,
+                    price: s.price,
+                    status: s.status,
+                  })),
+                }}
+                selectedSeatId={selectedSeat ? String(selectedSeat.id) : undefined}
+                onSelect={(seat) => setSelectedSeat({ id: Number(seat.id), tableNumber: seat.tableNumber, price: seat.price })}
+              />
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Lugar selecionado</p>
@@ -283,9 +313,9 @@ function TicketSales() {
                     {selectedSeat ? `Mesa ${selectedSeat.tableNumber} - ${formatCurrency(selectedSeat.price)}` : 'Selecione uma mesa disponivel'}
                   </p>
                 </div>
-                <Button type="button" disabled={!selectedSeat} onClick={handleBuy}>
+                <Button type="button" disabled={!selectedSeat || buyTicketMutation.isPending} onClick={handleBuy}>
                   <Ticket className="h-4 w-4" />
-                  Comprar convite
+                  {buyTicketMutation.isPending ? 'A comprar...' : 'Comprar convite'}
                 </Button>
               </div>
             </div>
@@ -297,12 +327,37 @@ function TicketSales() {
         </div>
       )}
 
-      {clientTickets.length > 0 && (
+      {myTickets.length > 0 && (
         <div className="space-y-3">
           <h3 className="font-semibold">Meus convites digitais</h3>
           <div className="grid gap-3 md:grid-cols-2">
-            {clientTickets.map((ticket) => (
-              <DigitalTicketCard key={ticket.id} ticket={ticket} events={publishedEvents} phone={user?.phone} />
+            {myTickets.map((ticket: any) => (
+              <DigitalTicketCard
+                key={ticket.id}
+                ticket={{
+                  id: String(ticket.id),
+                  eventId: String(ticket.eventId),
+                  clientId: String(ticket.clientId),
+                  clientName: ticket.clientName,
+                  clientPhone: ticket.clientPhone,
+                  seatId: String(ticket.seatId),
+                  tableNumber: ticket.tableNumber,
+                  price: ticket.price,
+                  qrCode: ticket.qrCode,
+                  whatsappUrl: ticket.whatsappUrl,
+                  deliveryStatus: ticket.deliveryStatus,
+                  status: ticket.status,
+                  purchasedAt: new Date(ticket.purchasedAt),
+                }}
+                events={visibleEvents.map((e: any) => ({
+                  ...e,
+                  id: String(e.id),
+                  date: new Date(e.date),
+                  createdAt: new Date(e.created_at),
+                  seats: [],
+                }))}
+                phone={user?.phone}
+              />
             ))}
           </div>
         </div>
@@ -313,15 +368,14 @@ function TicketSales() {
 
 function DigitalTicketCard({ ticket, events, phone }: { ticket: DigitalTicket; events: PublishedEvent[]; phone?: string }) {
   const event = events.find((item) => item.id === ticket.eventId)
-  const sendTicketWhatsApp = useVenueStore((state) => state.sendTicketWhatsApp)
   const digits = (phone || ticket.clientPhone || '').replace(/\D/g, '')
   const whatsappUrl = ticket.whatsappUrl || (digits
     ? `https://wa.me/${digits}?text=${encodeURIComponent([
-        'Convite digital Palace Lounge',
-        event ? `Evento: ${event.title}` : undefined,
-        `Mesa: ${ticket.tableNumber}`,
-        `Codigo QR: ${ticket.qrCode}`,
-      ].filter(Boolean).join('\n'))}`
+      'Convite digital Palace Lounge',
+      event ? `Evento: ${event.title}` : undefined,
+      `Mesa: ${ticket.tableNumber}`,
+      `Codigo QR: ${ticket.qrCode}`,
+    ].filter(Boolean).join('\n'))}`
     : undefined)
 
   return (
@@ -345,7 +399,6 @@ function DigitalTicketCard({ ticket, events, phone }: { ticket: DigitalTicket; e
           href={whatsappUrl}
           target="_blank"
           rel="noreferrer"
-          onClick={() => sendTicketWhatsApp(ticket.id, phone || ticket.clientPhone || '')}
           className="mt-3 inline-flex h-9 items-center gap-2 rounded-md bg-success px-3 text-sm font-medium text-white transition-colors hover:bg-success/90"
         >
           <MessageCircle className="h-4 w-4" />
@@ -355,6 +408,12 @@ function DigitalTicketCard({ ticket, events, phone }: { ticket: DigitalTicket; e
     </article>
   )
 }
+
+
+
+
+
+
 
 export default function ClientEventsPage() {
   const user = useAuthStore((state) => state.user)
@@ -375,19 +434,19 @@ export default function ClientEventsPage() {
             <h2 className="font-display text-2xl text-primary">Pedidos privados</h2>
             <p className="mt-1 text-sm text-muted-foreground">Acompanhe pedidos, aprovacoes e entradas.</p>
           </div>
-        {events.isLoading ? (
-          <p className="text-sm text-muted-foreground">A carregar eventos...</p>
-        ) : events.data?.length ? (
-          <div className="grid gap-3">
-            {events.data.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-border bg-surface p-5 text-sm text-muted-foreground">
-            Ainda nao existem pedidos de evento para a sua conta.
-          </div>
-        )}
+          {events.isLoading ? (
+            <p className="text-sm text-muted-foreground">A carregar eventos...</p>
+          ) : events.data?.length ? (
+            <div className="grid gap-3">
+              {events.data.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border bg-surface p-5 text-sm text-muted-foreground">
+              Ainda nao existem pedidos de evento para a sua conta.
+            </div>
+          )}
         </div>
 
         <EventRequestForm />

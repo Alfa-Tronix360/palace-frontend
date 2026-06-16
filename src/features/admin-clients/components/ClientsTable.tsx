@@ -2,13 +2,19 @@ import { type ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
 import { Eye, Star } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import { DataTable } from '@/components/tables/DataTable'
-import { mockClients } from '@/data'
+import { clientsAdapter } from '@/services/adapters/clients.adapter'
 import { formatCurrency, formatDate, getInitials } from '@/lib/utils'
 import type { User } from '@/types'
 
 export function ClientsTable() {
   const [selected, setSelected] = useState<User | null>(null)
+
+  const { data: clients = [], isLoading } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => clientsAdapter.getAll(),
+  })
 
   const columns: ColumnDef<User>[] = [
     {
@@ -73,11 +79,12 @@ export function ClientsTable() {
     },
   ]
 
+  if (isLoading) return <div className="text-center py-10 text-muted-foreground text-sm">A carregar clientes...</div>
+
   return (
     <>
-      <DataTable columns={columns} data={mockClients} searchPlaceholder="Pesquisar clientes…" />
+      <DataTable columns={columns} data={clients} searchPlaceholder="Pesquisar clientes…" />
 
-      {/* Detail Sheet */}
       <AnimatePresence>
         {selected && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -93,7 +100,6 @@ export function ClientsTable() {
                 <button onClick={() => setSelected(null)} className="text-muted-foreground hover:text-foreground text-xl leading-none">×</button>
               </div>
 
-              {/* Avatar */}
               <div className="flex flex-col items-center gap-3 mb-6 pb-6 border-b border-border">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold"
                   style={{ background: 'linear-gradient(135deg,#D9D0B5,#B89A67)', color: '#181818' }}>
@@ -110,14 +116,13 @@ export function ClientsTable() {
                 </div>
               </div>
 
-              {/* Info */}
               <div className="space-y-4">
                 {[
-                  { label: 'Email',         value: selected.email },
-                  { label: 'Telefone',      value: selected.phone },
+                  { label: 'Email', value: selected.email },
+                  { label: 'Telefone', value: selected.phone },
                   { label: 'Cliente desde', value: formatDate(selected.createdAt) },
-                  { label: 'Nº de reservas',value: String(selected.reservationCount) },
-                  { label: 'Total gasto',   value: formatCurrency(selected.totalSpent), highlight: true },
+                  { label: 'Nº de reservas', value: String(selected.reservationCount) },
+                  { label: 'Total gasto', value: formatCurrency(selected.totalSpent), highlight: true },
                 ].map(item => (
                   <div key={item.label}>
                     <p className="text-xs text-muted-foreground mb-0.5">{item.label}</p>
@@ -128,7 +133,6 @@ export function ClientsTable() {
                 ))}
               </div>
 
-              {/* VIP threshold */}
               {!selected.vip && (
                 <div className="mt-6 p-3 rounded-lg bg-background border border-border">
                   <p className="text-xs text-muted-foreground">

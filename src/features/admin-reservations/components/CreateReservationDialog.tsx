@@ -5,35 +5,63 @@ import { z } from 'zod'
 import { Plus, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
-import { mockClients, mockTables } from '@/data'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { clientsAdapter } from '@/services/adapters/clients.adapter'
+import { tablesAdapter } from '@/services/adapters/tables.adapter'
+import { reservationsAdapter } from '@/services/adapters/reservations.adapter'
 import { TIME_SLOTS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
 const schema = z.object({
-  clientId:  z.string().min(1, 'Selecione um cliente'),
-  tableId:   z.string().min(1, 'Selecione uma mesa'),
-  date:      z.string().min(1, 'Selecione uma data'),
-  time:      z.string().min(1, 'Selecione um horário'),
-  guests:    z.number().min(1).max(20),
-  notes:     z.string().max(300).optional(),
+  clientId: z.string().min(1, 'Selecione um cliente'),
+  tableId: z.string().min(1, 'Selecione uma mesa'),
+  date: z.string().min(1, 'Selecione uma data'),
+  time: z.string().min(1, 'Selecione um horário'),
+  guests: z.number().min(1).max(20),
+  notes: z.string().max(300).optional(),
 })
 type FormData = z.infer<typeof schema>
 
 export function CreateReservationDialog() {
   const [open, setOpen] = useState(false)
+  const queryClient = useQueryClient()
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => clientsAdapter.getAll(),
+    enabled: open,
+  })
+
+  const { data: tables = [] } = useQuery({
+    queryKey: ['tables'],
+    queryFn: () => tablesAdapter.getAll(),
+    enabled: open,
+  })
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { guests: 2 },
   })
 
-  const onSubmit = async (data: FormData) => {
-    await new Promise(r => setTimeout(r, 600))
-    console.log('New reservation:', data)
-    toast.success('Reserva criada com sucesso.')
-    reset()
-    setOpen(false)
-  }
+  const createMutation = useMutation({
+    mutationFn: (data: FormData) => reservationsAdapter.create({
+      ...data,
+      date: new Date(data.date),
+      tableId: data.tableId,
+      clientId: data.clientId,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reservations'] })
+      toast.success('Reserva criada com sucesso.')
+      reset()
+      setOpen(false)
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.detail || 'Erro ao criar reserva.')
+    },
+  })
+
+  const onSubmit = (data: FormData) => createMutation.mutate(data)
 
   const inputCls = (err: boolean) => cn(
     'w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors',
@@ -73,7 +101,7 @@ export function CreateReservationDialog() {
                   <label className="text-xs font-medium text-foreground/80">Cliente</label>
                   <select {...register('clientId')} className={inputCls(!!errors.clientId)}>
                     <option value="">Selecionar cliente…</option>
-                    {mockClients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                   {errors.clientId && <p className="text-xs text-danger">{errors.clientId.message}</p>}
                 </div>
@@ -98,7 +126,7 @@ export function CreateReservationDialog() {
                     <label className="text-xs font-medium text-foreground/80">Mesa</label>
                     <select {...register('tableId')} className={inputCls(!!errors.tableId)}>
                       <option value="">Selecionar…</option>
-                      {mockTables.filter(t => t.status === 'available').map(t => (
+                      {tables.filter(t => t.status === 'available').map(t => (
                         <option key={t.id} value={t.id}>Mesa {t.number} ({t.capacity} pessoas)</option>
                       ))}
                     </select>
@@ -121,10 +149,10 @@ export function CreateReservationDialog() {
                     className="flex-1 py-2.5 rounded-md text-sm border border-border text-muted-foreground hover:text-foreground transition-colors">
                     Cancelar
                   </button>
-                  <button type="submit" disabled={isSubmitting}
+                  <button type="submit" disabled={isSubmitting || createMutation.isPending}
                     className="flex-1 py-2.5 rounded-md text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50"
                     style={{ backgroundColor: '#D9D0B5', color: '#181818' }}>
-                    {isSubmitting ? 'A criar…' : 'Criar Reserva'}
+                    {createMutation.isPending ? 'A criar…' : 'Criar Reserva'}
                   </button>
                 </div>
               </form>

@@ -8,13 +8,14 @@ import { registerSchema, type RegisterInput } from '@/lib/validators'
 import { ROUTES, APP_NAME } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
-import { mockClients } from '@/data'
-
+import { http } from '@/services/api/http'
+import type { UserRole } from '@/types'
 export default function RegisterPage() {
   const navigate = useNavigate()
   const login = useAuthStore(s => s.login)
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirm, setShowConfirm]   = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [serverError, setServerError] = useState('')
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -22,23 +23,48 @@ export default function RegisterPage() {
   })
 
   const onSubmit = async (data: RegisterInput) => {
-    await new Promise(r => setTimeout(r, 700))
-    // Mock: auto-login with a mock client profile
-    const mockUser = {
-      ...mockClients[0],
-      id: `cl-new-${Date.now()}`,
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      vip: false,
-      totalSpent: 0,
-      reservationCount: 0,
-      createdAt: new Date(),
-    }
-    login(mockUser, 'mock-token-new-client')
-    navigate(ROUTES.CLIENT.DASHBOARD)
-  }
+    setServerError('')
+    try {
+      await http.post('/auth/register', {
+        nome: data.name,
+        email: data.email,
+        telefone: data.phone,
+        senha: data.password,
+      })
 
+      const loginRes = await http.post<unknown, {
+        access_token: string
+        refresh_token: string
+        user: {
+          id: string
+          name: string
+          email: string
+          phone: string
+          role: UserRole
+          vip: boolean
+          totalSpent: number
+          reservationCount: number
+          createdAt: string
+        }
+      }>('/auth/login', { email: data.email, senha: data.password })
+
+      const user = {
+        ...loginRes.user,
+        createdAt: new Date(loginRes.user.createdAt),
+      }
+
+      login(user, loginRes.access_token)
+      navigate(ROUTES.CLIENT.DASHBOARD)
+    } catch (err: unknown) {
+      const error = err as { response?: { status?: number; data?: { detail?: string } } }
+      const detail = error?.response?.data?.detail
+      if (error?.response?.status === 400 && detail) {
+        setServerError(detail)
+      } else {
+        setServerError('Erro ao criar conta. Tente novamente.')
+      }
+    }
+  }
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-16">
       <motion.div
@@ -137,6 +163,10 @@ export default function RegisterPage() {
                 </div>
               ))}
             </div>
+
+            {serverError && (
+              <p className="text-sm text-danger text-center">{serverError}</p>
+            )}
 
             <button
               type="submit"

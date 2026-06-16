@@ -12,6 +12,8 @@ import {
   useCreateClientReservation,
 } from '@/features/client/hooks/useClientArea'
 import type { Reservation, Table, VenueArea } from '@/types'
+import { useQuery } from '@tanstack/react-query'
+import { tablesAdapter } from '@/services/adapters/tables.adapter'
 
 function statusClass(status: Reservation['status']) {
   const classes: Record<Reservation['status'], string> = {
@@ -183,7 +185,10 @@ function ReservationWizard() {
   const user = useAuthStore((state) => state.user)
   const wizard = useReservationWizardStore()
   const areas = useVenueStore((state) => state.areas)
-  const venueTables = useVenueStore((state) => state.tables)
+  const { data: venueTables = [] } = useQuery({
+    queryKey: ['tables'],
+    queryFn: () => tablesAdapter.getAll(),
+  })
   const createReservation = useCreateClientReservation()
 
   const availableTables = venueTables.filter((table) => table.status === 'available' && table.capacity >= wizard.guests)
@@ -237,7 +242,7 @@ function ReservationWizard() {
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium">Convidados</span>
+            <span className="text-sm font-medium">Lugares</span>
             <div className="flex items-center gap-2">
               <Button
                 type="button"

@@ -1,11 +1,17 @@
 import { Link } from 'react-router-dom'
-import { mockReservations } from '@/data'
+import { useQuery } from '@tanstack/react-query'
 import { RESERVATION_STATUS_LABELS, RESERVATION_STATUS_COLORS, ROUTES } from '@/lib/constants'
 import { formatDate, cn } from '@/lib/utils'
 import { ArrowRight } from 'lucide-react'
+import { reservationsAdapter } from '@/services/adapters/reservations.adapter'
 
 export function RecentReservations() {
-  const recent = mockReservations.slice(0, 6)
+  const { data = [] } = useQuery({
+    queryKey: ['reservations'],
+    queryFn: () => reservationsAdapter.getAll(),
+  })
+
+  const recent = data.slice(0, 6)
 
   return (
     <div className="rounded-xl border border-border/40 bg-surface p-5">
@@ -17,7 +23,7 @@ export function RecentReservations() {
         </Link>
       </div>
       <div className="space-y-2">
-        {recent.map(r => (
+        {recent.length ? recent.map(r => (
           <div key={r.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground truncate">{r.clientName}</p>
@@ -27,7 +33,9 @@ export function RecentReservations() {
               {RESERVATION_STATUS_LABELS[r.status]}
             </span>
           </div>
-        ))}
+        )) : (
+          <p className="text-sm text-muted-foreground text-center py-4">Sem reservas recentes.</p>
+        )}
       </div>
     </div>
   )

@@ -1,8 +1,8 @@
 import { type ColumnDef } from '@tanstack/react-table'
-import { useState } from 'react'
 import { Check } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DataTable } from '@/components/tables/DataTable'
-import { mockPayments } from '@/data'
+import { paymentsAdapter } from '@/services/adapters/payments.adapter'
 import { formatCurrency, formatDate, cn } from '@/lib/utils'
 import { PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '@/lib/constants'
 import type { Payment } from '@/types'
@@ -10,17 +10,26 @@ import { toast } from 'sonner'
 
 const statusColor: Record<string, string> = {
   confirmed: 'bg-success/20 text-success',
-  pending:   'bg-warning/20 text-warning',
-  failed:    'bg-danger/20 text-danger',
+  pending: 'bg-warning/20 text-warning',
+  failed: 'bg-danger/20 text-danger',
 }
 
 export function PaymentsTable() {
-  const [data, setData] = useState<Payment[]>([...mockPayments])
+  const queryClient = useQueryClient()
 
-  const confirm = (id: string) => {
-    setData(prev => prev.map(p => p.id === id ? { ...p, status: 'confirmed' as const } : p))
-    toast.success('Pagamento confirmado.')
-  }
+  const { data = [], isLoading } = useQuery({
+    queryKey: ['payments'],
+    queryFn: () => paymentsAdapter.getAll(),
+  })
+
+  const confirmMutation = useMutation({
+    mutationFn: (id: string) => paymentsAdapter.confirm(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] })
+      toast.success('Pagamento confirmado.')
+    },
+    onError: () => toast.error('Erro ao confirmar pagamento.'),
+  })
 
   const columns: ColumnDef<Payment>[] = [
     {
@@ -70,7 +79,7 @@ export function PaymentsTable() {
         const p = row.original
         if (p.status !== 'pending') return null
         return (
-          <button onClick={() => confirm(p.id)}
+          <button onClick={() => confirmMutation.mutate(p.id)}
             className="w-7 h-7 rounded flex items-center justify-center bg-success/20 hover:bg-success/30 text-success transition-colors" title="Confirmar">
             <Check className="w-3.5 h-3.5" />
           </button>
@@ -79,6 +88,8 @@ export function PaymentsTable() {
       enableSorting: false,
     },
   ]
+
+  if (isLoading) return <div className="text-center py-10 text-muted-foreground text-sm">A carregar pagamentos...</div>
 
   return (
     <DataTable columns={columns} data={data} searchPlaceholder="Pesquisar pagamentos…" />

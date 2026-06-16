@@ -2,35 +2,51 @@ import { type ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
 import { Check, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DataTable } from '@/components/tables/DataTable'
-import { mockEvents } from '@/data'
+import { eventsAdapter } from '@/services/adapters/events.adapter'
 import { formatDate, formatCurrency, cn } from '@/lib/utils'
 import { EVENT_TYPE_LABELS, EVENT_STATUS_LABELS } from '@/lib/constants'
 import type { Event, EventStatus } from '@/types'
 import { toast } from 'sonner'
+import { http } from '@/services/api/http'
 
 const statusColors: Record<EventStatus, string> = {
-  pending:   'bg-warning/20 text-warning',
-  approved:  'bg-info/20 text-info',
+  pending: 'bg-warning/20 text-warning',
+  approved: 'bg-info/20 text-info',
   confirmed: 'bg-success/20 text-success',
   completed: 'bg-primary/20 text-primary',
   cancelled: 'bg-danger/20 text-danger',
 }
 
 export function EventsTable() {
-  const [data, setData] = useState<Event[]>([...mockEvents])
+  const queryClient = useQueryClient()
   const [detail, setDetail] = useState<Event | null>(null)
 
-  const approve = (id: string) => {
-    setData(prev => prev.map(e => e.id === id ? { ...e, status: 'approved' as const } : e))
-    toast.success('Evento aprovado.')
-    setDetail(null)
-  }
-  const cancel = (id: string) => {
-    setData(prev => prev.map(e => e.id === id ? { ...e, status: 'cancelled' as const } : e))
-    toast.success('Evento cancelado.')
-    setDetail(null)
-  }
+  const { data = [], isLoading } = useQuery({
+    queryKey: ['events'],
+    queryFn: () => eventsAdapter.getAll(),
+  })
+
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => http.patch(`/events/${id}`, { status: 'approved' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] })
+      toast.success('Evento aprovado.')
+      setDetail(null)
+    },
+    onError: () => toast.error('Erro ao aprovar evento.'),
+  })
+
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => http.patch(`/events/${id}`, { status: 'cancelled' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] })
+      toast.success('Evento cancelado.')
+      setDetail(null)
+    },
+    onError: () => toast.error('Erro ao cancelar evento.'),
+  })
 
   const columns: ColumnDef<Event>[] = [
     {
@@ -86,11 +102,11 @@ export function EventsTable() {
         if (e.status !== 'pending') return null
         return (
           <div className="flex gap-1">
-            <button onClick={() => approve(e.id)}
+            <button onClick={() => approveMutation.mutate(e.id)}
               className="w-7 h-7 rounded flex items-center justify-center bg-success/20 hover:bg-success/30 text-success transition-colors">
               <Check className="w-3.5 h-3.5" />
             </button>
-            <button onClick={() => cancel(e.id)}
+            <button onClick={() => cancelMutation.mutate(e.id)}
               className="w-7 h-7 rounded flex items-center justify-center bg-danger/20 hover:bg-danger/30 text-danger transition-colors">
               <X className="w-3.5 h-3.5" />
             </button>
@@ -100,6 +116,8 @@ export function EventsTable() {
       enableSorting: false,
     },
   ]
+
+  if (isLoading) return <div className="text-center py-10 text-muted-foreground text-sm">A carregar eventos...</div>
 
   return (
     <>
@@ -124,11 +142,11 @@ export function EventsTable() {
               </div>
               {detail.status === 'pending' && (
                 <div className="flex gap-3 mt-5">
-                  <button onClick={() => approve(detail.id)}
+                  <button onClick={() => approveMutation.mutate(detail.id)}
                     className="flex-1 py-2 rounded-md text-sm font-medium bg-success/20 text-success hover:bg-success/30 transition-colors">
                     Aprovar
                   </button>
-                  <button onClick={() => cancel(detail.id)}
+                  <button onClick={() => cancelMutation.mutate(detail.id)}
                     className="flex-1 py-2 rounded-md text-sm font-medium bg-danger/20 text-danger hover:bg-danger/30 transition-colors">
                     Recusar
                   </button>

@@ -1,24 +1,29 @@
 import { type ColumnDef } from '@tanstack/react-table'
-import { useState } from 'react'
 import { ToggleLeft, ToggleRight, Pencil } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DataTable } from '@/components/tables/DataTable'
-import { mockMenu } from '@/data'
+import { menuAdapter } from '@/services/adapters/menu.adapter'
 import { formatCurrency, cn } from '@/lib/utils'
 import { MENU_CATEGORY_LABELS } from '@/lib/constants'
 import type { MenuItem } from '@/types'
 import { toast } from 'sonner'
 
 export function MenuItemsTable() {
-  const [data, setData] = useState<MenuItem[]>([...mockMenu])
+  const queryClient = useQueryClient()
 
-  const toggleAvailability = (id: string) => {
-    setData(prev => prev.map(item => {
-      if (item.id !== id) return item
-      const updated = { ...item, available: !item.available }
-      toast.success(`"${item.name}" marcado como ${updated.available ? 'disponível' : 'indisponível'}.`)
-      return updated
-    }))
-  }
+  const { data = [], isLoading } = useQuery({
+    queryKey: ['menu'],
+    queryFn: () => menuAdapter.getAll(),
+  })
+
+  const toggleMutation = useMutation({
+    mutationFn: (item: MenuItem) => menuAdapter.update(item.id, { available: !item.available }),
+    onSuccess: (updated) => {
+      queryClient.invalidateQueries({ queryKey: ['menu'] })
+      toast.success(`"${updated.name}" marcado como ${updated.available ? 'disponível' : 'indisponível'}.`)
+    },
+    onError: () => toast.error('Erro ao atualizar disponibilidade.'),
+  })
 
   const columns: ColumnDef<MenuItem>[] = [
     {
@@ -27,11 +32,10 @@ export function MenuItemsTable() {
       cell: ({ row }) => (
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-md overflow-hidden bg-muted flex-shrink-0">
-            <img
-              src={`/images/gallery-${String((mockMenu.indexOf(row.original) % 17) + 1).padStart(2, '0')}.png`}
-              alt={row.original.name}
-              className="w-full h-full object-cover"
-            />
+            {row.original.imageUrl
+              ? <img src={row.original.imageUrl} alt={row.original.name} className="w-full h-full object-cover" />
+              : <div className="w-full h-full bg-secondary" />
+            }
           </div>
           <div>
             <p className="font-medium text-foreground text-sm">{row.original.name}</p>
@@ -63,7 +67,7 @@ export function MenuItemsTable() {
       header: 'Disponível',
       cell: ({ row }) => (
         <button
-          onClick={() => toggleAvailability(row.original.id)}
+          onClick={() => toggleMutation.mutate(row.original)}
           className={cn(
             'flex items-center gap-1.5 text-xs font-medium transition-colors',
             row.original.available ? 'text-success' : 'text-muted-foreground'
@@ -71,7 +75,7 @@ export function MenuItemsTable() {
         >
           {row.original.available
             ? <ToggleRight className="w-5 h-5" />
-            : <ToggleLeft  className="w-5 h-5" />
+            : <ToggleLeft className="w-5 h-5" />
           }
           {row.original.available ? 'Sim' : 'Não'}
         </button>
@@ -89,6 +93,8 @@ export function MenuItemsTable() {
       enableSorting: false,
     },
   ]
+
+  if (isLoading) return <div className="text-center py-10 text-muted-foreground text-sm">A carregar cardápio...</div>
 
   return (
     <DataTable columns={columns} data={data} searchPlaceholder="Pesquisar itens do cardápio…" />

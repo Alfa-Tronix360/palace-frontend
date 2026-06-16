@@ -1,19 +1,25 @@
 import { motion } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import { PaymentsTable } from '@/features/admin-payments/components/PaymentsTable'
-import { mockPayments } from '@/data'
+import { paymentsAdapter } from '@/services/adapters/payments.adapter'
 import { formatCurrency } from '@/lib/utils'
 
-const totalConfirmed = mockPayments.filter(p => p.status === 'confirmed').reduce((s, p) => s + p.amount, 0)
-const totalPending   = mockPayments.filter(p => p.status === 'pending').reduce((s, p) => s + p.amount, 0)
-
-const stats = [
-  { label: 'Total Confirmado',   value: formatCurrency(totalConfirmed), color: 'text-success' },
-  { label: 'Por Confirmar',      value: formatCurrency(totalPending),   color: 'text-warning' },
-  { label: 'Nº Pagamentos',      value: String(mockPayments.length),    color: 'text-foreground' },
-  { label: 'Pendentes',          value: String(mockPayments.filter(p => p.status === 'pending').length), color: 'text-warning' },
-]
-
 export default function AdminPaymentsPage() {
+  const { data: payments = [] } = useQuery({
+    queryKey: ['payments'],
+    queryFn: () => paymentsAdapter.getAll(),
+  })
+
+  const totalConfirmed = payments.filter(p => p.status === 'confirmed').reduce((s, p) => s + p.amount, 0)
+  const totalPending = payments.filter(p => p.status === 'pending').reduce((s, p) => s + p.amount, 0)
+
+  const stats = [
+    { label: 'Total Confirmado', value: formatCurrency(totalConfirmed), color: 'text-success' },
+    { label: 'Por Confirmar', value: formatCurrency(totalPending), color: 'text-warning' },
+    { label: 'Nº Pagamentos', value: String(payments.length), color: 'text-foreground' },
+    { label: 'Pendentes', value: String(payments.filter(p => p.status === 'pending').length), color: 'text-warning' },
+  ]
+
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>

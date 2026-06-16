@@ -1,58 +1,56 @@
-import { mockMenu } from '@/data/mock-menu'
-import type { MenuItem, MenuFilters, CreateMenuItemDTO } from '@/types'
+import { http } from '@/services/api/http'
+import type { MenuItem, MenuCategory } from '@/types'
 
-const delay = (ms = 350) => new Promise<void>((r) => setTimeout(r, ms))
-
-let store = [...mockMenu]
+function normalizeMenuItem(item: any): MenuItem {
+  return {
+    id: String(item.id),
+    name: item.name,
+    description: item.description,
+    category: item.category as MenuCategory,
+    price: item.price,
+    imageUrl: item.imageUrl || item.image_url,
+    available: item.available,
+    featured: item.featured,
+    allergens: item.allergens || [],
+    createdAt: new Date(item.created_at),
+  }
+}
 
 export const menuAdapter = {
-  async getAll(filters?: MenuFilters): Promise<MenuItem[]> {
-    await delay()
-    let data = [...store]
-    if (filters?.category) data = data.filter((i) => i.category === filters.category)
-    if (filters?.available !== undefined) data = data.filter((i) => i.available === filters.available)
-    if (filters?.featured !== undefined) data = data.filter((i) => i.featured === filters.featured)
-    if (filters?.search) {
-      const q = filters.search.toLowerCase()
-      data = data.filter(
-        (i) => i.name.toLowerCase().includes(q) || i.description.toLowerCase().includes(q)
-      )
-    }
-    return data
+  async getAll(filters?: { category?: string; available?: boolean; featured?: boolean; search?: string }): Promise<MenuItem[]> {
+    const data = await http.get<unknown, any[]>('/menu', { params: filters })
+    return data.map(normalizeMenuItem)
   },
 
-  async getById(id: string): Promise<MenuItem> {
-    await delay()
-    const item = store.find((i) => i.id === id)
-    if (!item) throw new Error('Item não encontrado')
-    return item
+  async create(data: { name: string; description: string; category: string; price: number; available: boolean; featured: boolean; imageUrl?: string; allergens?: string[] }): Promise<MenuItem> {
+    const item = await http.post<unknown, any>('/menu', {
+      name: data.name,
+      description: data.description,
+      category: data.category,
+      price: data.price,
+      available: data.available,
+      featured: data.featured,
+      image_url: data.imageUrl,
+      allergens: data.allergens || [],
+    })
+    return normalizeMenuItem(item)
   },
 
-  async create(data: CreateMenuItemDTO): Promise<MenuItem> {
-    await delay(500)
-    const newItem: MenuItem = { ...data, id: `mi-${Date.now()}`, createdAt: new Date() }
-    store.push(newItem)
-    return newItem
-  },
-
-  async update(id: string, data: Partial<CreateMenuItemDTO>): Promise<MenuItem> {
-    await delay()
-    const idx = store.findIndex((i) => i.id === id)
-    if (idx === -1) throw new Error('Item não encontrado')
-    store[idx] = { ...store[idx], ...data }
-    return store[idx]
+  async update(id: string, data: Partial<MenuItem>): Promise<MenuItem> {
+    const item = await http.patch<unknown, any>(`/menu/${id}`, {
+      name: data.name,
+      description: data.description,
+      category: data.category,
+      price: data.price,
+      available: data.available,
+      featured: data.featured,
+      image_url: data.imageUrl,
+      allergens: data.allergens || [],
+    })
+    return normalizeMenuItem(item)
   },
 
   async delete(id: string): Promise<void> {
-    await delay()
-    store = store.filter((i) => i.id !== id)
-  },
-
-  async toggleAvailability(id: string): Promise<MenuItem> {
-    await delay(200)
-    const item = store.find((i) => i.id === id)
-    if (!item) throw new Error('Item não encontrado')
-    item.available = !item.available
-    return item
+    await http.delete(`/menu/${id}`)
   },
 }

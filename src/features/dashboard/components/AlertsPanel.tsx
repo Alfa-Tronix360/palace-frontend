@@ -1,12 +1,24 @@
 import { Link } from 'react-router-dom'
 import { AlertCircle, Clock, CreditCard } from 'lucide-react'
-import { mockReservations, mockPayments } from '@/data'
+import { useQuery } from '@tanstack/react-query'
 import { ROUTES } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
+import { reservationsAdapter } from '@/services/adapters/reservations.adapter'
+import { paymentsAdapter } from '@/services/adapters/payments.adapter'
 
 export function AlertsPanel() {
-  const pending  = mockReservations.filter(r => r.status === 'pending').slice(0, 3)
-  const unpaid   = mockPayments.filter(p => p.status === 'pending').slice(0, 2)
+  const { data: reservations = [] } = useQuery({
+    queryKey: ['reservations'],
+    queryFn: () => reservationsAdapter.getAll(),
+  })
+
+  const { data: payments = [] } = useQuery({
+    queryKey: ['payments'],
+    queryFn: () => paymentsAdapter.getAll(),
+  })
+
+  const pending = reservations.filter(r => r.status === 'pending').slice(0, 3)
+  const unpaid = payments.filter(p => p.status === 'pending').slice(0, 2)
 
   const total = pending.length + unpaid.length
   if (total === 0) return null
@@ -45,7 +57,7 @@ export function AlertsPanel() {
           {unpaid.map(p => (
             <div key={p.id} className="flex items-center justify-between py-1.5 text-sm">
               <span className="text-foreground">{p.clientName}</span>
-              <span className="text-xs text-accent font-medium">{(p.amount/1000).toFixed(0)}K AOA</span>
+              <span className="text-xs text-accent font-medium">{(p.amount / 1000).toFixed(0)}K AOA</span>
             </div>
           ))}
           <Link to={ROUTES.ADMIN.PAYMENTS} className="text-xs text-primary hover:underline mt-1 block">

@@ -2,8 +2,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend,
 } from 'recharts'
-import { mockReservations } from '@/data/mock-reservations'
-import { useVenueStore } from '@/store/venue.store'
+import { useQuery } from '@tanstack/react-query'
+import { http } from '@/services/api/http'
 
 const tooltip = {
   backgroundColor: '#232323',
@@ -22,25 +22,9 @@ const cancelData = [
   { month: 'Jun', cancelamentos: 3, noShows: 1 },
 ]
 
-const topClients = [
-  { name: 'Dr. António Bento',        gasto: 450000 },
-  { name: 'Francisco Xavier',          gasto: 380000 },
-  { name: 'Dra. Maria Lopes',          gasto: 320000 },
-  { name: 'Ana Paula Henriques',       gasto: 210000 },
-  { name: 'Eng. Carlos Domingos',      gasto: 210000 },
-]
-
 const occupancyTrend = [
   { week: 'S1', taxa: 62 }, { week: 'S2', taxa: 71 }, { week: 'S3', taxa: 68 },
   { week: 'S4', taxa: 75 }, { week: 'S5', taxa: 80 }, { week: 'S6', taxa: 73 },
-]
-
-const productData = [
-  { name: 'Lombo Angus',    vendas: 48, color: '#D9D0B5' },
-  { name: 'Salmão Maracujá',vendas: 38, color: '#B89A67' },
-  { name: 'Espresso Martini',vendas:35, color: '#A89A85' },
-  { name: 'Risotto Camarão',vendas: 30, color: '#7a6a55' },
-  { name: 'Mousse Chocolate',vendas:28, color: '#4a3f30' },
 ]
 
 export function CancellationsReport() {
@@ -55,8 +39,8 @@ export function CancellationsReport() {
           <YAxis tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
           <Tooltip contentStyle={tooltip} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
           <Legend formatter={v => <span style={{ color: '#A89A85', fontSize: 11 }}>{v}</span>} />
-          <Bar dataKey="cancelamentos" name="Cancelamentos" fill="#C74A4A" radius={[3,3,0,0]} />
-          <Bar dataKey="noShows"       name="No-Shows"       fill="#D6A93D" radius={[3,3,0,0]} />
+          <Bar dataKey="cancelamentos" name="Cancelamentos" fill="#C74A4A" radius={[3, 3, 0, 0]} />
+          <Bar dataKey="noShows" name="No-Shows" fill="#D6A93D" radius={[3, 3, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -64,20 +48,30 @@ export function CancellationsReport() {
 }
 
 export function TopClientsReport() {
+  const { data = [] } = useQuery({
+    queryKey: ['reports', 'top-clients'],
+    queryFn: () => http.get<unknown, any[]>('/reports/top-clients'),
+  })
+
+  const chartData = data.map(c => ({ name: c.client_name, gasto: c.reservations * 10000 }))
+
   return (
     <div className="rounded-xl border border-border/40 bg-surface p-5">
       <p className="text-sm font-semibold text-foreground mb-1">Top 5 Clientes</p>
-      <p className="text-xs text-muted-foreground mb-4">Por total gasto (AOA)</p>
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={topClients} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-          <XAxis type="number" tickFormatter={v => `${(v/1000).toFixed(0)}K`}
-            tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
-          <YAxis type="category" dataKey="name" tick={{ fill: '#A89A85', fontSize: 10 }} axisLine={false} tickLine={false} width={130} />
-          <Tooltip contentStyle={tooltip} formatter={(v) => [`${(Number(v)/1000).toFixed(0)}K AOA`, '']} />
-          <Bar dataKey="gasto" name="Total Gasto" fill="#D9D0B5" radius={[0,3,3,0]} />
-        </BarChart>
-      </ResponsiveContainer>
+      <p className="text-xs text-muted-foreground mb-4">Por número de reservas</p>
+      {chartData.length ? (
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={chartData.slice(0, 5)} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+            <XAxis type="number" tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
+            <YAxis type="category" dataKey="name" tick={{ fill: '#A89A85', fontSize: 10 }} axisLine={false} tickLine={false} width={130} />
+            <Tooltip contentStyle={tooltip} />
+            <Bar dataKey="gasto" name="Reservas" fill="#D9D0B5" radius={[0, 3, 3, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">Sem dados ainda.</div>
+      )}
     </div>
   )
 }
@@ -101,82 +95,98 @@ export function OccupancyReport() {
 }
 
 export function TopProductsReport() {
+  const { data = [] } = useQuery({
+    queryKey: ['reports', 'employee-sales'],
+    queryFn: () => http.get<unknown, any[]>('/reports/employees/sales'),
+  })
+
+  const colors = ['#D9D0B5', '#B89A67', '#A89A85', '#7a6a55', '#4a3f30']
+  const chartData = data.slice(0, 5).map((e, i) => ({
+    name: e.employee_name,
+    vendas: e.orders,
+    color: colors[i],
+  }))
+
   return (
     <div className="rounded-xl border border-border/40 bg-surface p-5">
-      <p className="text-sm font-semibold text-foreground mb-1">Produtos mais Vendidos</p>
-      <p className="text-xs text-muted-foreground mb-4">Nº de pedidos este mês</p>
-      <ResponsiveContainer width="100%" height={200}>
-        <PieChart>
-          <Pie data={productData} cx="50%" cy="50%" outerRadius={75} paddingAngle={2} dataKey="vendas">
-            {productData.map((e, i) => <Cell key={i} fill={e.color} />)}
-          </Pie>
-          <Tooltip contentStyle={tooltip} formatter={(v) => [`${v} pedidos`, '']} />
-          <Legend formatter={v => <span style={{ color: '#A89A85', fontSize: 11 }}>{v}</span>} />
-        </PieChart>
-      </ResponsiveContainer>
+      <p className="text-sm font-semibold text-foreground mb-1">Funcionários com mais Pedidos</p>
+      <p className="text-xs text-muted-foreground mb-4">Nº de pedidos lançados</p>
+      {chartData.length ? (
+        <ResponsiveContainer width="100%" height={200}>
+          <PieChart>
+            <Pie data={chartData} cx="50%" cy="50%" outerRadius={75} paddingAngle={2} dataKey="vendas">
+              {chartData.map((e, i) => <Cell key={i} fill={e.color} />)}
+            </Pie>
+            <Tooltip contentStyle={tooltip} formatter={(v) => [`${v} pedidos`, '']} />
+            <Legend formatter={v => <span style={{ color: '#A89A85', fontSize: 11 }}>{v}</span>} />
+          </PieChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">Sem dados ainda.</div>
+      )}
     </div>
   )
 }
 
 export function TopReservedTablesReport() {
-  const tableData = mockReservations
-    .reduce<Array<{ name: string; reservas: number }>>((acc, reservation) => {
-      const name = `Mesa ${reservation.tableNumber}`
-      const item = acc.find((entry) => entry.name === name)
-      if (item) item.reservas += 1
-      else acc.push({ name, reservas: 1 })
-      return acc
-    }, [])
-    .sort((a, b) => b.reservas - a.reservas)
-    .slice(0, 6)
+  const { data = [] } = useQuery({
+    queryKey: ['reports', 'tables-reservations'],
+    queryFn: () => http.get<unknown, any[]>('/reports/tables/reservations'),
+  })
+
+  const chartData = data.slice(0, 6).map(t => ({
+    name: `Mesa ${t.table_id}`,
+    reservas: t.reservations,
+  }))
 
   return (
     <div className="rounded-xl border border-border/40 bg-surface p-5">
       <p className="text-sm font-semibold text-foreground mb-1">Mesas mais Reservadas</p>
-      <p className="text-xs text-muted-foreground mb-4">Ranking por numero de reservas</p>
-      <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={tableData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-          <XAxis dataKey="name" tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
-          <Tooltip contentStyle={tooltip} />
-          <Bar dataKey="reservas" name="Reservas" fill="#D9D0B5" radius={[3,3,0,0]} />
-        </BarChart>
-      </ResponsiveContainer>
+      <p className="text-xs text-muted-foreground mb-4">Ranking por número de reservas</p>
+      {chartData.length ? (
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={chartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+            <XAxis dataKey="name" tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={tooltip} />
+            <Bar dataKey="reservas" name="Reservas" fill="#D9D0B5" radius={[3, 3, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex h-[220px] items-center justify-center rounded-lg border border-border bg-background text-sm text-muted-foreground">
+          As mesas mais reservadas aparecem aqui.
+        </div>
+      )}
     </div>
   )
 }
 
 export function TableTicketRevenueReport() {
-  const tickets = useVenueStore((state) => state.tickets)
-  const tableData = tickets
-    .reduce<Array<{ name: string; receita: number; convites: number }>>((acc, ticket) => {
-      const name = `Mesa ${ticket.tableNumber}`
-      const item = acc.find((entry) => entry.name === name)
-      if (item) {
-        item.receita += ticket.price
-        item.convites += 1
-      } else {
-        acc.push({ name, receita: ticket.price, convites: 1 })
-      }
-      return acc
-    }, [])
-    .sort((a, b) => b.receita - a.receita)
-    .slice(0, 6)
+  const { data = [] } = useQuery({
+    queryKey: ['reports', 'table-ticket-sales'],
+    queryFn: () => http.get<unknown, any[]>('/reports/tables/ticket-sales'),
+  })
+
+  const chartData = data.slice(0, 6).map(t => ({
+    name: `Mesa ${t.table_number}`,
+    receita: t.revenue,
+    convites: t.sold,
+  }))
 
   return (
     <div className="rounded-xl border border-border/40 bg-surface p-5">
       <p className="text-sm font-semibold text-foreground mb-1">Mesas mais Vendidas</p>
       <p className="text-xs text-muted-foreground mb-4">Receita de convites digitais por mesa</p>
-      {tableData.length ? (
+      {chartData.length ? (
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={tableData} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+          <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-            <XAxis type="number" tickFormatter={v => `${(Number(v)/1000).toFixed(0)}K`}
+            <XAxis type="number" tickFormatter={v => `${(Number(v) / 1000).toFixed(0)}K`}
               tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
             <YAxis type="category" dataKey="name" tick={{ fill: '#A89A85', fontSize: 10 }} axisLine={false} tickLine={false} width={90} />
-            <Tooltip contentStyle={tooltip} formatter={(v, name) => name === 'receita' ? [`${(Number(v)/1000).toFixed(0)}K AOA`, 'Receita'] : [v, 'Convites']} />
-            <Bar dataKey="receita" name="Receita" fill="#B89A67" radius={[0,3,3,0]} />
+            <Tooltip contentStyle={tooltip} formatter={(v, name) => name === 'receita' ? [`${(Number(v) / 1000).toFixed(0)}K AOA`, 'Receita'] : [v, 'Convites']} />
+            <Bar dataKey="receita" name="Receita" fill="#B89A67" radius={[0, 3, 3, 0]} />
           </BarChart>
         </ResponsiveContainer>
       ) : (
@@ -189,39 +199,35 @@ export function TableTicketRevenueReport() {
 }
 
 export function TopEmployeesSalesReport() {
-  const employeeOrders = useVenueStore((state) => state.employeeOrders)
-  const employeeData = employeeOrders
-    .reduce<Array<{ name: string; receita: number; pedidos: number }>>((acc, order) => {
-      const item = acc.find((entry) => entry.name === order.employeeName)
-      if (item) {
-        item.receita += order.total
-        item.pedidos += 1
-      } else {
-        acc.push({ name: order.employeeName, receita: order.total, pedidos: 1 })
-      }
-      return acc
-    }, [])
-    .sort((a, b) => b.receita - a.receita)
-    .slice(0, 6)
+  const { data = [] } = useQuery({
+    queryKey: ['reports', 'employee-sales'],
+    queryFn: () => http.get<unknown, any[]>('/reports/employees/sales'),
+  })
+
+  const chartData = data.slice(0, 6).map(e => ({
+    name: e.employee_name,
+    receita: e.revenue,
+    pedidos: e.orders,
+  }))
 
   return (
     <div className="rounded-xl border border-border/40 bg-surface p-5">
-      <p className="text-sm font-semibold text-foreground mb-1">Funcionarios que mais Vendem</p>
-      <p className="text-xs text-muted-foreground mb-4">Receita dos pedidos lancados por atendente</p>
-      {employeeData.length ? (
+      <p className="text-sm font-semibold text-foreground mb-1">Funcionários que mais Vendem</p>
+      <p className="text-xs text-muted-foreground mb-4">Receita dos pedidos lançados por atendente</p>
+      {chartData.length ? (
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={employeeData} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
+          <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-            <XAxis type="number" tickFormatter={v => `${(Number(v)/1000).toFixed(0)}K`}
+            <XAxis type="number" tickFormatter={v => `${(Number(v) / 1000).toFixed(0)}K`}
               tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
             <YAxis type="category" dataKey="name" tick={{ fill: '#A89A85', fontSize: 10 }} axisLine={false} tickLine={false} width={110} />
-            <Tooltip contentStyle={tooltip} formatter={(v, name) => name === 'receita' ? [`${(Number(v)/1000).toFixed(0)}K AOA`, 'Receita'] : [v, 'Pedidos']} />
-            <Bar dataKey="receita" name="Receita" fill="#D9D0B5" radius={[0,3,3,0]} />
+            <Tooltip contentStyle={tooltip} formatter={(v, name) => name === 'receita' ? [`${(Number(v) / 1000).toFixed(0)}K AOA`, 'Receita'] : [v, 'Pedidos']} />
+            <Bar dataKey="receita" name="Receita" fill="#D9D0B5" radius={[0, 3, 3, 0]} />
           </BarChart>
         </ResponsiveContainer>
       ) : (
         <div className="flex h-[220px] items-center justify-center rounded-lg border border-border bg-background text-sm text-muted-foreground">
-          O ranking aparece depois dos primeiros pedidos lancados.
+          O ranking aparece depois dos primeiros pedidos lançados.
         </div>
       )}
     </div>

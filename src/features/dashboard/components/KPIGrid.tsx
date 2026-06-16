@@ -1,46 +1,46 @@
 import { motion } from 'framer-motion'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
-import { useVenueStore } from '@/store/venue.store'
-
-interface KPI {
-  label: string
-  value: string
-  sub: string
-  trend?: 'up' | 'down' | 'neutral'
-  color: string
-}
-
-const kpis: KPI[] = [
-  { label: 'Reservas Hoje',       value: '8',          sub: '+2 vs ontem',           trend: 'up',      color: 'text-info' },
-  { label: 'Clientes Registados', value: '248',        sub: '+3 esta semana',        trend: 'up',      color: 'text-success' },
-  { label: 'Eventos Agendados',   value: '5',          sub: '2 por confirmar',       trend: 'neutral', color: 'text-warning' },
-  { label: 'Receita do Dia',      value: '185.000 AOA',sub: '92% da meta diária',    trend: 'up',      color: 'text-primary' },
-  { label: 'Receita do Mês',      value: '4,2M AOA',   sub: '+12% vs mês anterior',  trend: 'up',      color: 'text-accent' },
-  { label: 'Taxa de Ocupação',    value: '73%',        sub: 'média das mesas',       trend: 'up',      color: 'text-info' },
-  { label: 'Cancelamentos',       value: '3',          sub: 'este mês',              trend: 'down',    color: 'text-danger' },
-  { label: 'Clientes VIP',        value: '42',         sub: '17% do total',          trend: 'up',      color: 'text-accent' },
-]
+import { tablesAdapter } from '@/services/adapters/tables.adapter'
+import { reservationsAdapter } from '@/services/adapters/reservations.adapter'
+import { clientsAdapter } from '@/services/adapters/clients.adapter'
 
 export function KPIGrid() {
-  const tables = useVenueStore((state) => state.tables)
-  const availableTables = tables.filter((table) => table.status === 'available').length
-  const occupiedTables = tables.filter((table) => table.status === 'occupied').length
-  const reservedTables = tables.filter((table) => table.status === 'reserved').length
-  const allKpis: KPI[] = [
-    ...kpis,
+  const { data: tables = [] } = useQuery({ queryKey: ['tables'], queryFn: () => tablesAdapter.getAll() })
+  const { data: reservations = [] } = useQuery({ queryKey: ['reservations'], queryFn: () => reservationsAdapter.getAll() })
+  const { data: clients = [] } = useQuery({ queryKey: ['clients'], queryFn: () => clientsAdapter.getAll() })
+
+  const today = new Date().toDateString()
+  const reservationsToday = reservations.filter(r => new Date(r.date).toDateString() === today).length
+  const availableTables = tables.filter(t => t.status === 'available').length
+  const occupiedTables = tables.filter(t => t.status === 'occupied').length
+  const reservedTables = tables.filter(t => t.status === 'reserved').length
+  const cancelledCount = reservations.filter(r => r.status === 'cancelled').length
+  const vipClients = clients.filter(c => c.vip).length
+  const pendingEvents = reservations.filter(r => r.status === 'pending').length
+  const occupancyRate = tables.length > 0 ? Math.round(((occupiedTables + reservedTables) / tables.length) * 100) : 0
+
+  const kpis = [
+    { label: 'Reservas Hoje', value: String(reservationsToday), sub: 'reservas hoje', trend: 'up' as const, color: 'text-info' },
+    { label: 'Clientes Registados', value: String(clients.length), sub: 'total de clientes', trend: 'up' as const, color: 'text-success' },
+    { label: 'Eventos Agendados', value: String(pendingEvents), sub: 'reservas pendentes', trend: 'neutral' as const, color: 'text-warning' },
+    { label: 'Total Reservas', value: String(reservations.length), sub: 'todas as reservas', trend: 'up' as const, color: 'text-primary' },
+    { label: 'Taxa de Ocupação', value: `${occupancyRate}%`, sub: 'média das mesas', trend: 'up' as const, color: 'text-info' },
+    { label: 'Cancelamentos', value: String(cancelledCount), sub: 'reservas canceladas', trend: 'down' as const, color: 'text-danger' },
+    { label: 'Clientes VIP', value: String(vipClients), sub: 'clientes VIP', trend: 'up' as const, color: 'text-accent' },
     {
       label: 'Mesas',
       value: String(tables.length),
       sub: `${availableTables} vagas | ${occupiedTables} ocupadas | ${reservedTables} reservadas`,
-      trend: 'neutral',
+      trend: 'neutral' as const,
       color: 'text-success',
     },
   ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4">
-      {allKpis.map((kpi, i) => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+      {kpis.map((kpi, i) => (
         <motion.div
           key={kpi.label}
           initial={{ opacity: 0, y: 12 }}
@@ -51,9 +51,9 @@ export function KPIGrid() {
           <p className="text-xs text-muted-foreground leading-tight">{kpi.label}</p>
           <p className={cn('text-xl font-bold', kpi.color)}>{kpi.value}</p>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            {kpi.trend === 'up'      && <TrendingUp   className="w-3 h-3 text-success" />}
-            {kpi.trend === 'down'    && <TrendingDown className="w-3 h-3 text-danger" />}
-            {kpi.trend === 'neutral' && <Minus        className="w-3 h-3 text-warning" />}
+            {kpi.trend === 'up' && <TrendingUp className="w-3 h-3 text-success" />}
+            {kpi.trend === 'down' && <TrendingDown className="w-3 h-3 text-danger" />}
+            {kpi.trend === 'neutral' && <Minus className="w-3 h-3 text-warning" />}
             <span>{kpi.sub}</span>
           </div>
         </motion.div>

@@ -2,9 +2,11 @@ import { FormEvent, useMemo, useState } from 'react'
 import { ClipboardList, Plus, Trophy, UserCog } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
-import { useVenueStore } from '@/store/venue.store'
+import { tablesAdapter } from '@/services/adapters/tables.adapter'
+import { employeesAdapter } from '@/services/adapters/employees.adapter'
 import type { EmployeeRole } from '@/types'
 
 const roleLabels: Record<EmployeeRole, string> = {
@@ -14,35 +16,83 @@ const roleLabels: Record<EmployeeRole, string> = {
 }
 
 export default function AdminEmployeesPage() {
-  const tables = useVenueStore((state) => state.tables)
-  const employees = useVenueStore((state) => state.employees)
-  const employeeOrders = useVenueStore((state) => state.employeeOrders)
-  const registerEmployee = useVenueStore((state) => state.registerEmployee)
-  const assignEmployeeToTable = useVenueStore((state) => state.assignEmployeeToTable)
-  const createEmployeeOrder = useVenueStore((state) => state.createEmployeeOrder)
+  const queryClient = useQueryClient()
+
+  const { data: tables = [] } = useQuery({
+    queryKey: ['tables'],
+    queryFn: () => tablesAdapter.getAll(),
+  })
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees'],
+    queryFn: () => employeesAdapter.getAll(),
+  })
+
+  const { data: employeeOrders = [] } = useQuery({
+    queryKey: ['employee-orders'],
+    queryFn: () => employeesAdapter.getOrders(),
+  })
 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [role, setRole] = useState<EmployeeRole>('attendant')
-  const [tableId, setTableId] = useState(tables[0]?.id ?? '')
+  const [tableId, setTableId] = useState('')
 
-  const [orderEmployeeId, setOrderEmployeeId] = useState(employees[0]?.id ?? '')
-  const selectedEmployee = employees.find((employee) => employee.id === orderEmployeeId)
-  const [orderTableId, setOrderTableId] = useState(selectedEmployee?.tableId || tables[0]?.id || '')
+  const [orderEmployeeId, setOrderEmployeeId] = useState('')
+  const [orderTableId, setOrderTableId] = useState('')
   const [itemName, setItemName] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [price, setPrice] = useState(0)
 
+  const createEmployeeMutation = useMutation({
+    mutationFn: () => employeesAdapter.create({
+      name: name.trim(),
+      phone: phone.trim(),
+      role,
+      table_id: tableId ? Number(tableId) : undefined,
+    }),
+    onSuccess: (employee) => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] })
+      setName('')
+      setPhone('')
+      setRole('attendant')
+      setTableId('')
+      setOrderEmployeeId(employee.id)
+      setOrderTableId(employee.tableId || tables[0]?.id || '')
+      toast.success('Funcionario cadastrado.')
+    },
+    onError: () => toast.error('Erro ao cadastrar funcionario.'),
+  })
+
+  const assignTableMutation = useMutation({
+    mutationFn: ({ employeeId, tableId }: { employeeId: string; tableId?: string }) =>
+      employeesAdapter.assignTable(employeeId, tableId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
+    onError: () => toast.error('Erro ao atribuir mesa.'),
+  })
+
+  const createOrderMutation = useMutation({
+    mutationFn: () => employeesAdapter.createOrder({
+      employeeId: orderEmployeeId,
+      tableId: orderTableId,
+      items: [{ name: itemName.trim(), quantity, price }],
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employee-orders'] })
+      setItemName('')
+      setQuantity(1)
+      setPrice(0)
+      toast.success('Pedido lancado na mesa.')
+    },
+    onError: () => toast.error('Nao foi possivel lancar o pedido.'),
+  })
+
   const topEmployees = useMemo(() => {
     return employeeOrders
       .reduce<Array<{ id: string; name: string; total: number; orders: number }>>((acc, order) => {
-        const item = acc.find((entry) => entry.id === order.employeeId)
-        if (item) {
-          item.total += order.total
-          item.orders += 1
-        } else {
-          acc.push({ id: order.employeeId, name: order.employeeName, total: order.total, orders: 1 })
-        }
+        const item = acc.find((e) => e.id === order.employeeId)
+        if (item) { item.total += order.total; item.orders += 1 }
+        else acc.push({ id: order.employeeId, name: order.employeeName, total: order.total, orders: 1 })
         return acc
       }, [])
       .sort((a, b) => b.total - a.total)
@@ -52,13 +102,9 @@ export default function AdminEmployeesPage() {
   const topTables = useMemo(() => {
     return employeeOrders
       .reduce<Array<{ id: string; name: string; total: number; orders: number }>>((acc, order) => {
-        const item = acc.find((entry) => entry.id === order.tableId)
-        if (item) {
-          item.total += order.total
-          item.orders += 1
-        } else {
-          acc.push({ id: order.tableId, name: `Mesa ${order.tableNumber}`, total: order.total, orders: 1 })
-        }
+        const item = acc.find((e) => e.id === order.tableId)
+        if (item) { item.total += order.total; item.orders += 1 }
+        else acc.push({ id: order.tableId, name: `Mesa ${order.tableNumber}`, total: order.total, orders: 1 })
         return acc
       }, [])
       .sort((a, b) => b.total - a.total)
@@ -68,33 +114,13 @@ export default function AdminEmployeesPage() {
   function handleRegisterEmployee(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!name.trim() || !phone.trim()) return
-
-    const employee = registerEmployee({ name: name.trim(), phone: phone.trim(), role, tableId: tableId || undefined })
-    setName('')
-    setPhone('')
-    setRole('attendant')
-    setOrderEmployeeId(employee.id)
-    setOrderTableId(employee.tableId || tables[0]?.id || '')
-    toast.success('Funcionario cadastrado.')
+    createEmployeeMutation.mutate()
   }
 
   function handleCreateOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!orderEmployeeId || !orderTableId || !itemName.trim() || quantity <= 0 || price <= 0) return
-
-    try {
-      createEmployeeOrder({
-        employeeId: orderEmployeeId,
-        tableId: orderTableId,
-        items: [{ name: itemName.trim(), quantity, price }],
-      })
-      setItemName('')
-      setQuantity(1)
-      setPrice(0)
-      toast.success('Pedido lancado na mesa.')
-    } catch {
-      toast.error('Nao foi possivel lancar o pedido.')
-    }
+    createOrderMutation.mutate()
   }
 
   return (
@@ -112,34 +138,31 @@ export default function AdminEmployeesPage() {
               <UserCog className="h-5 w-5 text-primary" />
               <h2 className="font-semibold">Cadastrar funcionario</h2>
             </div>
-
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block space-y-2">
                 <span className="text-sm font-medium">Nome</span>
-                <input value={name} onChange={(event) => setName(event.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+                <input value={name} onChange={(e) => setName(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
               </label>
               <label className="block space-y-2">
                 <span className="text-sm font-medium">Telefone WhatsApp</span>
-                <input value={phone} onChange={(event) => setPhone(event.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
               </label>
               <label className="block space-y-2">
                 <span className="text-sm font-medium">Funcao</span>
-                <select value={role} onChange={(event) => setRole(event.target.value as EmployeeRole)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                <select value={role} onChange={(e) => setRole(e.target.value as EmployeeRole)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
                   {Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </label>
               <label className="block space-y-2">
                 <span className="text-sm font-medium">Mesa atribuida</span>
-                <select value={tableId} onChange={(event) => setTableId(event.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                <select value={tableId} onChange={(e) => setTableId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
                   <option value="">Sem mesa fixa</option>
-                  {tables.map((table) => <option key={table.id} value={table.id}>Mesa {table.number}</option>)}
+                  {tables.map((t) => <option key={t.id} value={t.id}>Mesa {t.number}</option>)}
                 </select>
               </label>
             </div>
-
-            <Button type="submit" disabled={!name.trim() || !phone.trim()}>
-              <Plus className="h-4 w-4" />
-              Cadastrar
+            <Button type="submit" disabled={!name.trim() || !phone.trim() || createEmployeeMutation.isPending}>
+              <Plus className="h-4 w-4" /> Cadastrar
             </Button>
           </form>
 
@@ -148,48 +171,41 @@ export default function AdminEmployeesPage() {
               <ClipboardList className="h-5 w-5 text-primary" />
               <h2 className="font-semibold">Lancar pedido da mesa</h2>
             </div>
-
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block space-y-2">
                 <span className="text-sm font-medium">Funcionario</span>
-                <select
-                  value={orderEmployeeId}
-                  onChange={(event) => {
-                    const employee = employees.find((item) => item.id === event.target.value)
-                    setOrderEmployeeId(event.target.value)
-                    setOrderTableId(employee?.tableId || tables[0]?.id || '')
-                  }}
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                >
+                <select value={orderEmployeeId} onChange={(e) => {
+                  const emp = employees.find((item) => item.id === e.target.value)
+                  setOrderEmployeeId(e.target.value)
+                  setOrderTableId(emp?.tableId || tables[0]?.id || '')
+                }} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
                   <option value="">Selecione</option>
-                  {employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.name}</option>)}
+                  {employees.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
                 </select>
               </label>
               <label className="block space-y-2">
                 <span className="text-sm font-medium">Mesa</span>
-                <select value={orderTableId} onChange={(event) => setOrderTableId(event.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-                  {tables.map((table) => <option key={table.id} value={table.id}>Mesa {table.number}</option>)}
+                <select value={orderTableId} onChange={(e) => setOrderTableId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                  {tables.map((t) => <option key={t.id} value={t.id}>Mesa {t.number}</option>)}
                 </select>
               </label>
               <label className="block space-y-2">
                 <span className="text-sm font-medium">Produto/servico</span>
-                <input value={itemName} onChange={(event) => setItemName(event.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+                <input value={itemName} onChange={(e) => setItemName(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <label className="block space-y-2">
                   <span className="text-sm font-medium">Qtd.</span>
-                  <input type="number" min={1} value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+                  <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
                 </label>
                 <label className="block space-y-2">
                   <span className="text-sm font-medium">Preco</span>
-                  <input type="number" min={0} value={price} onChange={(event) => setPrice(Number(event.target.value))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+                  <input type="number" min={0} value={price} onChange={(e) => setPrice(Number(e.target.value))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
                 </label>
               </div>
             </div>
-
-            <Button type="submit" disabled={!orderEmployeeId || !orderTableId || !itemName.trim() || price <= 0}>
-              <Plus className="h-4 w-4" />
-              Lancar pedido
+            <Button type="submit" disabled={!orderEmployeeId || !orderTableId || !itemName.trim() || price <= 0 || createOrderMutation.isPending}>
+              <Plus className="h-4 w-4" /> Lancar pedido
             </Button>
           </form>
 
@@ -199,16 +215,19 @@ export default function AdminEmployeesPage() {
             </div>
             <div className="divide-y divide-border/40">
               {employees.length ? employees.map((employee) => {
-                const table = tables.find((item) => item.id === employee.tableId)
+                const table = tables.find((t) => t.id === employee.tableId)
                 return (
                   <div key={employee.id} className="grid gap-3 p-4 md:grid-cols-[1fr_180px] md:items-center">
                     <div>
                       <p className="font-medium">{employee.name}</p>
                       <p className="text-sm text-muted-foreground">{roleLabels[employee.role]} | {employee.phone}</p>
                     </div>
-                    <select value={employee.tableId || ''} onChange={(event) => assignEmployeeToTable(employee.id, event.target.value || undefined)} className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                    <select
+                      value={employee.tableId || ''}
+                      onChange={(e) => assignTableMutation.mutate({ employeeId: employee.id, tableId: e.target.value || undefined })}
+                      className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
                       <option value="">{table ? `Mesa ${table.number}` : 'Sem mesa fixa'}</option>
-                      {tables.map((item) => <option key={item.id} value={item.id}>Mesa {item.number}</option>)}
+                      {tables.map((t) => <option key={t.id} value={t.id}>Mesa {t.number}</option>)}
                     </select>
                   </div>
                 )
@@ -228,15 +247,7 @@ export default function AdminEmployeesPage() {
   )
 }
 
-function RankingCard({
-  title,
-  subtitle,
-  items,
-}: {
-  title: string
-  subtitle: string
-  items: Array<{ id: string; name: string; total: number; orders: number }>
-}) {
+function RankingCard({ title, subtitle, items }: { title: string; subtitle: string; items: Array<{ id: string; name: string; total: number; orders: number }> }) {
   return (
     <section className="rounded-xl border border-border/40 bg-surface p-5">
       <div className="flex items-center gap-2">
@@ -246,7 +257,6 @@ function RankingCard({
           <p className="text-xs text-muted-foreground">{subtitle}</p>
         </div>
       </div>
-
       <div className="mt-4 space-y-3">
         {items.length ? items.map((item, index) => (
           <div key={item.id} className="rounded-lg border border-border bg-background p-3">

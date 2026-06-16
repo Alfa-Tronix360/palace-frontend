@@ -41,7 +41,8 @@ export function slugify(text: string) {
     .replace(/[^\w-]/g, '')
 }
 
-export function getInitials(name: string) {
+export function getInitials(name?: string) {
+  if (!name) return '?'
   return name
     .split(' ')
     .slice(0, 2)
