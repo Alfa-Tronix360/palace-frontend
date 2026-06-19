@@ -1,4 +1,4 @@
-import { type MouseEvent, type FormEvent, useMemo, useState } from 'react'
+import { type MouseEvent, type FormEvent, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Armchair, CalendarDays, Eye, Image, Map, Move, Plus, Ticket, Trash2, Users,

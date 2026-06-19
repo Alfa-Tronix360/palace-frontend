@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
-import { lazy, Suspense, type JSX } from 'react'
+import { lazy, Suspense } from 'react'
 import { PublicLayout } from './PublicLayout'
 import { ClientLayout } from './ClientLayout'
 import { AdminLayout } from './AdminLayout'
