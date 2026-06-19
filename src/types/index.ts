@@ -1,6 +1,6 @@
 /* ─── Utilizadores ───────────────────────────────────────────────────────── */
 
-export type UserRole = 'admin' | 'client' | 'staff'
+export type UserRole = 'admin' | 'client' | 'staff' | 'chefe_sala' | 'chefe_cozinha' | 'bar'
 
 export interface User {
   id: string
@@ -32,6 +32,7 @@ export interface Table {
   areaId?: string
   priceTier?: 'standard' | 'premium' | 'vip'
   imageUrl?: string
+   price?: number 
 }
 
 export type VenueAreaShape = 'rectangle' | 'circle'

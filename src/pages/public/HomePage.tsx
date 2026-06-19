@@ -4,35 +4,37 @@ import { Link } from 'react-router-dom'
 import { PrismaHero } from '@/components/ui/prisma-hero'
 import { ShuffleHero } from '@/components/ui/shuffle-grid'
 import { ROUTES } from '@/lib/constants'
+import { useSiteImages } from '@/hooks/useSiteImages'
+import type { SiteImageKey } from '@/lib/site-images.constants'
 
 /* ── Destaques ───────────────────────────────────────────────────────────── */
-const highlights = [
+const highlights: { icon: typeof Star; title: string; description: string; imageKey: SiteImageKey }[] = [
   {
     icon: Star,
     title: 'Gastronomia Premium',
     description: 'Pratos elaborados com ingredientes selecionados, numa fusão de sabores que homenageia a culinária internacional e angolana.',
-    image: '/images/gallery-05.png',
+    imageKey: 'gallery-05',
   },
   {
     icon: Users,
     title: 'Serviço Personalizado',
     description: 'Cada detalhe é pensado para que a sua experiência seja única. O nosso programa VIP garante atenção exclusiva.',
-    image: '/images/gallery-06.png',
+    imageKey: 'gallery-06',
   },
   {
     icon: Clock,
     title: 'Ambiente Sofisticado',
     description: 'Um espaço desenhado para criar memórias. Do pequeno-almoço elegante ao jantar íntimo, o Palace é o cenário perfeito.',
-    image: '/images/gallery-07.png',
+    imageKey: 'gallery-07',
   },
 ]
 
 /* ── MenuPreview items ───────────────────────────────────────────────────── */
-const menuPreviews = [
-  { name: 'Lombo de Vaca Angus', category: 'Prato Principal', price: '9.500 AOA', image: '/images/gallery-08.png' },
-  { name: 'Carpaccio de Polvo', category: 'Entrada', price: '3.800 AOA', image: '/images/gallery-09.png' },
-  { name: 'Espresso Martini', category: 'Cocktail', price: '3.000 AOA', image: '/images/gallery-10.png' },
-  { name: 'Mousse de Chocolate Belga', category: 'Sobremesa', price: '2.500 AOA', image: '/images/gallery-11.png' },
+const menuPreviews: { name: string; category: string; price: string; imageKey: SiteImageKey }[] = [
+  { name: 'Lombo de Vaca Angus', category: 'Prato Principal', price: '9.500 AOA', imageKey: 'gallery-08' },
+  { name: 'Carpaccio de Polvo', category: 'Entrada', price: '3.800 AOA', imageKey: 'gallery-09' },
+  { name: 'Espresso Martini', category: 'Cocktail', price: '3.000 AOA', imageKey: 'gallery-10' },
+  { name: 'Mousse de Chocolate Belga', category: 'Sobremesa', price: '2.500 AOA', imageKey: 'gallery-11' },
 ]
 
 /* ── Animação de secção ──────────────────────────────────────────────────── */
@@ -42,12 +44,14 @@ const fadeUp = {
 }
 
 export default function HomePage() {
+  const { resolve } = useSiteImages()
+
   return (
     <div className="min-h-screen bg-background">
 
       {/* ── Hero ──────────────────────────────────────────────────────── */}
       <PrismaHero
-        backgroundImage="/images/gallery-01.png"
+        backgroundImage={resolve('gallery-01')}
         title="Palace Lounge"
         subtitle="Uma experiência gastronómica única no coração de Luanda. Ambiente sofisticado, gastronomia premium e serviço personalizado."
         ctaLabel="Reservar Mesa"
@@ -84,7 +88,7 @@ export default function HomePage() {
             >
               <div className="relative h-52 overflow-hidden">
                 <img
-                  src={h.image}
+                  src={resolve(h.imageKey)}
                   alt={h.title}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
@@ -140,7 +144,7 @@ export default function HomePage() {
               >
                 <div className="relative h-40 sm:h-48 overflow-hidden">
                   <img
-                    src={item.image}
+                    src={resolve(item.imageKey)}
                     alt={item.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
@@ -176,7 +180,7 @@ export default function HomePage() {
       <section className="relative overflow-hidden py-24">
         <div className="absolute inset-0">
           <img
-            src="/images/gallery-12.png"
+            src={resolve('gallery-12')}
             alt="Eventos Palace Lounge"
             className="w-full h-full object-cover"
           />

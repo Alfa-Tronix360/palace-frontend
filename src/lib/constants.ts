@@ -7,6 +7,7 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/registo',
   SCANNER: '/scanner',
+  EVENTS_PUBLIC: '/eventos',  // ← adiciona aqui
   CLIENT: {
     DASHBOARD: '/cliente',
     RESERVATIONS: '/cliente/reservas',
@@ -21,8 +22,15 @@ export const ROUTES = {
     CLIENTS: '/admin/clientes',
     EVENTS: '/admin/eventos',
     MENU: '/admin/cardapio',
+    IMAGES: '/admin/imagens',
     PAYMENTS: '/admin/pagamentos',
     REPORTS: '/admin/relatorios',
+  },
+  OPERACIONAL: {
+    DASHBOARD: '/operacional',
+    COZINHA: '/operacional/cozinha',
+    BAR: '/operacional/bar',
+    EQUIPA: '/operacional/equipa',
   },
 } as const
 

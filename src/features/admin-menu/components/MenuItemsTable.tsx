@@ -8,7 +8,11 @@ import { MENU_CATEGORY_LABELS } from '@/lib/constants'
 import type { MenuItem } from '@/types'
 import { toast } from 'sonner'
 
-export function MenuItemsTable() {
+interface Props {
+  onEdit?: (item: MenuItem) => void
+}
+
+export function MenuItemsTable({ onEdit }: Props) {
   const queryClient = useQueryClient()
 
   const { data = [], isLoading } = useQuery({
@@ -85,8 +89,11 @@ export function MenuItemsTable() {
     {
       id: 'actions',
       header: '',
-      cell: () => (
-        <button className="w-7 h-7 flex items-center justify-center rounded-lg border border-border hover:bg-secondary transition-colors text-muted-foreground">
+      cell: ({ row }) => (
+        <button
+          onClick={() => onEdit?.(row.original)}
+          className="w-7 h-7 flex items-center justify-center rounded-lg border border-border hover:bg-secondary transition-colors text-muted-foreground"
+        >
           <Pencil className="w-3.5 h-3.5" />
         </button>
       ),

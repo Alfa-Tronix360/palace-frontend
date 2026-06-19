@@ -1,7 +1,7 @@
 import { Outlet, NavLink, Link, Navigate } from 'react-router-dom'
 import {
   LayoutDashboard, Calendar, Users, PartyPopper,
-  UtensilsCrossed, CreditCard, BarChart3, LogOut, ChevronRight, Armchair, UserCog,
+  UtensilsCrossed, CreditCard, BarChart3, LogOut, ChevronRight, Armchair, UserCog, Image,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth.store'
 import { ROUTES, APP_NAME } from '@/lib/constants'
@@ -15,6 +15,7 @@ const navLinks = [
   { to: ROUTES.ADMIN.CLIENTS, label: 'Clientes', icon: Users },
   { to: ROUTES.ADMIN.EVENTS, label: 'Eventos', icon: PartyPopper },
   { to: ROUTES.ADMIN.MENU, label: 'Cardápio', icon: UtensilsCrossed },
+  { to: ROUTES.ADMIN.IMAGES, label: 'Imagens', icon: Image },
   { to: ROUTES.ADMIN.PAYMENTS, label: 'Pagamentos', icon: CreditCard },
   { to: ROUTES.ADMIN.REPORTS, label: 'Relatórios', icon: BarChart3 },
 ]

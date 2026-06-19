@@ -1,11 +1,10 @@
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { MenuItemsTable } from '@/features/admin-menu/components/MenuItemsTable'
 import { menuAdapter } from '@/services/adapters/menu.adapter'
 import { MENU_CATEGORY_LABELS } from '@/lib/constants'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { MenuCategory } from '@/types'
+import type { MenuCategory, MenuItem } from '@/types'
 import { useState } from 'react'
 import {
   Dialog,
@@ -29,6 +28,7 @@ const EMPTY_FORM = {
 
 export default function AdminMenuPage() {
   const [open, setOpen] = useState(false)
+  const [editItem, setEditItem] = useState<MenuItem | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
@@ -49,17 +49,41 @@ export default function AdminMenuPage() {
     },
   })
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof menuAdapter.update>[1] }) =>
+      menuAdapter.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['menu'] })
+      handleClose()
+    },
+  })
+
   async function uploadImage(file: File): Promise<string> {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('upload_preset', 'palace_lounge')
-
     const res = await fetch('https://api.cloudinary.com/v1_1/dkcq4gtxp/image/upload', {
       method: 'POST',
       body: formData,
     })
     const data = await res.json()
     return data.secure_url
+  }
+
+  function handleEdit(item: MenuItem) {
+    setEditItem(item)
+    setForm({
+      name: item.name,
+      description: item.description,
+      category: item.category,
+      price: String(item.price),
+      image_url: item.imageUrl ?? '',
+      available: item.available,
+      featured: item.featured,
+      allergens: item.allergens?.join(', ') ?? '',
+    })
+    setImagePreview(item.imageUrl ?? '')
+    setOpen(true)
   }
 
   async function handleSubmit() {
@@ -79,7 +103,7 @@ export default function AdminMenuPage() {
       setUploading(false)
     }
 
-    createMutation.mutate({
+    const payload = {
       name: form.name,
       description: form.description,
       category: form.category,
@@ -90,7 +114,13 @@ export default function AdminMenuPage() {
       allergens: form.allergens
         ? form.allergens.split(',').map(a => a.trim()).filter(Boolean)
         : [],
-    })
+    }
+
+    if (editItem) {
+      updateMutation.mutate({ id: editItem.id, data: payload })
+    } else {
+      createMutation.mutate(payload)
+    }
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
@@ -101,10 +131,13 @@ export default function AdminMenuPage() {
 
   function handleClose() {
     setOpen(false)
+    setEditItem(null)
     setForm(EMPTY_FORM)
     setImageFile(null)
     setImagePreview('')
   }
+
+  const isPending = createMutation.isPending || updateMutation.isPending
 
   return (
     <div className="space-y-6">
@@ -136,17 +169,15 @@ export default function AdminMenuPage() {
         })}
       </div>
 
-      <MenuItemsTable />
+      <MenuItemsTable onEdit={handleEdit} />
 
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Novo Item do Cardápio</DialogTitle>
+            <DialogTitle>{editItem ? 'Editar Item' : 'Novo Item do Cardápio'}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
-
-            {/* Nome */}
             <div>
               <label className="text-sm font-medium">Nome *</label>
               <input
@@ -159,7 +190,6 @@ export default function AdminMenuPage() {
               />
             </div>
 
-            {/* Descrição */}
             <div>
               <label className="text-sm font-medium">Descrição</label>
               <textarea
@@ -172,7 +202,6 @@ export default function AdminMenuPage() {
               />
             </div>
 
-            {/* Categoria + Preço */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium">Categoria *</label>
@@ -200,6 +229,7 @@ export default function AdminMenuPage() {
                 />
               </div>
             </div>
+
             <div>
               <label className="text-sm font-medium">Imagem</label>
               <input
@@ -219,7 +249,6 @@ export default function AdminMenuPage() {
               )}
             </div>
 
-            {/* Alergénios */}
             <div>
               <label className="text-sm font-medium">Alergénios</label>
               <input
@@ -232,31 +261,17 @@ export default function AdminMenuPage() {
               />
             </div>
 
-            {/* Disponível + Destaque */}
             <div className="flex gap-6">
               <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-                <input
-                  name="available"
-                  type="checkbox"
-                  checked={form.available}
-                  onChange={handleChange}
-                  className="w-4 h-4"
-                />
+                <input name="available" type="checkbox" checked={form.available} onChange={handleChange} className="w-4 h-4" />
                 Disponível
               </label>
               <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-                <input
-                  name="featured"
-                  type="checkbox"
-                  checked={form.featured}
-                  onChange={handleChange}
-                  className="w-4 h-4"
-                />
+                <input name="featured" type="checkbox" checked={form.featured} onChange={handleChange} className="w-4 h-4" />
                 Destaque
               </label>
             </div>
 
-            {/* Botões */}
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={handleClose}
@@ -266,11 +281,11 @@ export default function AdminMenuPage() {
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={createMutation.isPending || uploading || !form.name || !form.price}
+                disabled={isPending || uploading || !form.name || !form.price}
                 className="px-4 py-2 rounded-md text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: '#D9D0B5', color: '#181818' }}
               >
-                {uploading ? 'A carregar imagem...' : createMutation.isPending ? 'A guardar...' : 'Guardar'}
+                {uploading ? 'A carregar imagem...' : isPending ? 'A guardar...' : 'Guardar'}
               </button>
             </div>
           </div>

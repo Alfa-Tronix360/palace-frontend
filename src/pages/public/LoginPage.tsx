@@ -14,10 +14,19 @@ export default function LoginPage() {
   const [erro, setErro] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const roleRedirect: Record<string, string> = {
+    admin: ROUTES.ADMIN.DASHBOARD,
+    staff: ROUTES.SCANNER,
+    chefe_sala: ROUTES.OPERACIONAL.DASHBOARD,
+    chefe_cozinha: ROUTES.OPERACIONAL.COZINHA,
+    bar: ROUTES.OPERACIONAL.BAR,
+    client: ROUTES.CLIENT.DASHBOARD,
+  }
+
   function handleMockLogin(role: UserRole) {
     const user = role === 'admin' ? mockAdminUser : role === 'staff' ? mockStaffUser : mockClients[0]
     login(user, 'mock-token-' + role)
-    navigate(role === 'admin' ? ROUTES.ADMIN.DASHBOARD : role === 'staff' ? ROUTES.SCANNER : ROUTES.CLIENT.DASHBOARD)
+    navigate(roleRedirect[role] ?? ROUTES.CLIENT.DASHBOARD)
   }
 
   async function handleRealLogin() {
@@ -34,7 +43,10 @@ export default function LoginPage() {
       if (!res.ok) throw new Error(data.detail || 'Erro ao entrar')
       login(data.user, data.access_token)
       const role = data.user.role
-      navigate(role === 'admin' ? ROUTES.ADMIN.DASHBOARD : role === 'staff' ? ROUTES.SCANNER : ROUTES.CLIENT.DASHBOARD)
+
+      // DEPOIS
+
+      navigate(roleRedirect[role] ?? ROUTES.CLIENT.DASHBOARD)
     } catch (e: any) {
       setErro(e.message)
     } finally {

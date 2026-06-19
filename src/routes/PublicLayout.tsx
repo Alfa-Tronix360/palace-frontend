@@ -6,6 +6,7 @@ import { PalaceFooter } from '@/components/ui/palace-footer'
 const navLinks = [
   { to: ROUTES.ABOUT, label: 'Sobre' },
   { to: ROUTES.MENU, label: 'Cardápio' },
+  { to: '/eventos', label: 'Eventos' },
   { to: ROUTES.GALLERY, label: 'Galeria' },
   { to: ROUTES.CONTACTS, label: 'Contactos' },
 ]

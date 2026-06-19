@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { Masonry, GalleryImage } from '@/components/ui/masonry'
 import { ROUTES } from '@/lib/constants'
+import { useSiteImages } from '@/hooks/useSiteImages'
+import type { SiteImageKey } from '@/lib/site-images.constants'
 
 const fadeUp = {
-  hidden:  { opacity: 0, y: 28 },
+  hidden: { opacity: 0, y: 28 },
   visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.55 } }),
 }
 
@@ -22,19 +24,21 @@ const values = [
   { title: 'Exclusividade', desc: 'Um espaço para quem valoriza o requinte, a privacidade e as experiências verdadeiramente únicas.' },
 ]
 
-const galleryImages = [
-  '/images/gallery-01.png', '/images/gallery-02.png', '/images/gallery-03.png',
-  '/images/gallery-04.png', '/images/gallery-13.png', '/images/gallery-14.png',
-  '/images/gallery-15.png', '/images/gallery-16.png', '/images/gallery-17.png',
+const galleryKeys: SiteImageKey[] = [
+  'gallery-01', 'gallery-02', 'gallery-03',
+  'gallery-04', 'gallery-13', 'gallery-14',
+  'gallery-15', 'gallery-16', 'gallery-17',
 ]
 
 export default function AboutPage() {
+  const { resolve } = useSiteImages()
+
   return (
     <div className="min-h-screen bg-background">
 
       {/* Hero */}
       <section className="relative h-[60vh] overflow-hidden">
-        <img src="/images/gallery-02.png" alt="Palace Lounge" className="w-full h-full object-cover" />
+        <img src={resolve('gallery-02')} alt="Palace Lounge" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/70" />
         <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 lg:px-8 pb-12 max-w-7xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
@@ -67,7 +71,7 @@ export default function AboutPage() {
           </motion.div>
 
           <motion.div variants={fadeUp} custom={1} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <img src="/images/gallery-03.png" alt="Palace Lounge interior"
+            <img src={resolve('gallery-03')} alt="Palace Lounge interior"
               className="rounded-2xl w-full h-[420px] object-cover border border-border/30" />
           </motion.div>
         </div>
@@ -133,10 +137,10 @@ export default function AboutPage() {
           <h2 className="font-display text-3xl text-foreground">Imagens que contam a história</h2>
         </motion.div>
         <Masonry>
-          {galleryImages.map((src, i) => (
-            <motion.div key={i} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
+          {galleryKeys.map((key, i) => (
+            <motion.div key={key} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
               transition={{ delay: i * 0.05 }} viewport={{ once: true }}>
-              <GalleryImage src={src} alt={`Palace Lounge ${i + 1}`} />
+              <GalleryImage src={resolve(key)} alt={`Palace Lounge ${i + 1}`} />
             </motion.div>
           ))}
         </Masonry>
