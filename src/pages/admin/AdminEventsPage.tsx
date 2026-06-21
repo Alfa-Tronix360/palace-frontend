@@ -1,5 +1,6 @@
 import { type MouseEvent, type FormEvent, useState } from 'react'
 import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 import {
   Armchair, CalendarDays, Eye, Image, Map, Move, Plus, Ticket, Trash2, Users,
 } from 'lucide-react'
@@ -590,6 +591,15 @@ export default function AdminEventsPage() {
     },
   })
 
+  const deleteEventMutation = useMutation({
+    mutationFn: (id: number) => http.delete(`/published-events/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['published-events'] })
+      toast.success('Evento eliminado.')
+    },
+    onError: () => toast.error('Erro ao eliminar evento.'),
+  })
+
   const togglePublishMutation = useMutation({
     mutationFn: ({ id, published }: { id: number; published: boolean }) =>
       http.post(published ? `/published-events/${id}/unpublish` : `/published-events/${id}/publish`, {}),
@@ -668,17 +678,18 @@ export default function AdminEventsPage() {
 
           <label className="block space-y-2">
             <span className="text-sm font-medium">Nome do palco</span>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Preço base (Kz)</span>
-              <input type="number" min="0" value={basePrice} onChange={e => setBasePrice(e.target.value)}
-                placeholder="Ex: 15000"
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-            </label>
             <input value={stageLabel} onChange={e => setStageLabel(e.target.value)}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
           </label>
 
-          // DEPOIS
+          <label className="block space-y-2">
+            <span className="text-sm font-medium">Preço base (Kz)</span>
+            <input type="number" min="0" value={basePrice} onChange={e => setBasePrice(e.target.value)}
+              placeholder="Ex: 15000"
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+          </label>
+
+
           <label className="block space-y-2">
             <span className="text-sm font-medium">Imagem do evento</span>
             <input type="file" accept="image/*"
@@ -698,7 +709,7 @@ export default function AdminEventsPage() {
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
           </label>
 
-          // DEPOIS
+
           <Button type="submit" disabled={!title || !date || createEventMutation.isPending || uploadingBanner} className="w-full">
             <Ticket className="h-4 w-4" />
             {uploadingBanner ? 'A carregar imagem...' : createEventMutation.isPending ? 'A publicar...' : 'Publicar evento'}
@@ -725,11 +736,22 @@ export default function AdminEventsPage() {
                           {available} lugares disponiveis | {sold} vendidos
                         </p>
                       </div>
-                      <Button type="button" variant="outline"
-                        onClick={() => togglePublishMutation.mutate({ id: event.id, published: event.published })}>
-                        <Eye className="h-4 w-4" />
-                        {event.published ? 'Publicado' : 'Oculto'}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button type="button" variant="outline"
+                          onClick={() => togglePublishMutation.mutate({ id: event.id, published: event.published })}>
+                          <Eye className="h-4 w-4" />
+                          {event.published ? 'Publicado' : 'Oculto'}
+                        </Button>
+                        <Button type="button" variant="outline"
+                          onClick={() => {
+                            if (confirm(`Apagar "${event.title}"?`)) {
+                              deleteEventMutation.mutate(event.id)
+                            }
+                          }}
+                          className="text-danger border-danger/30 hover:bg-danger/10">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
                       {event.seats?.slice(0, 8).map((seat: any) => (

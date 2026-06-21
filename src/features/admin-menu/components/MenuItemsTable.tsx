@@ -1,5 +1,5 @@
 import { type ColumnDef } from '@tanstack/react-table'
-import { ToggleLeft, ToggleRight, Pencil } from 'lucide-react'
+import { ToggleLeft, ToggleRight, Pencil, Trash2 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DataTable } from '@/components/tables/DataTable'
 import { menuAdapter } from '@/services/adapters/menu.adapter'
@@ -27,6 +27,15 @@ export function MenuItemsTable({ onEdit }: Props) {
       toast.success(`"${updated.name}" marcado como ${updated.available ? 'disponível' : 'indisponível'}.`)
     },
     onError: () => toast.error('Erro ao atualizar disponibilidade.'),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => menuAdapter.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['menu'] })
+      toast.success('Item apagado.')
+    },
+    onError: () => toast.error('Erro ao apagar item.'),
   })
 
   const columns: ColumnDef<MenuItem>[] = [
@@ -90,12 +99,24 @@ export function MenuItemsTable({ onEdit }: Props) {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
-        <button
-          onClick={() => onEdit?.(row.original)}
-          className="w-7 h-7 flex items-center justify-center rounded-lg border border-border hover:bg-secondary transition-colors text-muted-foreground"
-        >
-          <Pencil className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onEdit?.(row.original)}
+            className="w-7 h-7 flex items-center justify-center rounded-lg border border-border hover:bg-secondary transition-colors text-muted-foreground"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => {
+              if (confirm(`Apagar "${row.original.name}"?`)) {
+                deleteMutation.mutate(row.original.id)
+              }
+            }}
+            className="w-7 h-7 flex items-center justify-center rounded-lg border border-danger/30 hover:bg-danger/10 transition-colors text-danger"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
       ),
       enableSorting: false,
     },
