@@ -13,20 +13,6 @@ const tooltip = {
   fontSize: '12px',
 }
 
-const cancelData = [
-  { month: 'Jan', cancelamentos: 7, noShows: 3 },
-  { month: 'Fev', cancelamentos: 4, noShows: 2 },
-  { month: 'Mar', cancelamentos: 6, noShows: 4 },
-  { month: 'Abr', cancelamentos: 5, noShows: 1 },
-  { month: 'Mai', cancelamentos: 4, noShows: 2 },
-  { month: 'Jun', cancelamentos: 3, noShows: 1 },
-]
-
-const occupancyTrend = [
-  { week: 'S1', taxa: 62 }, { week: 'S2', taxa: 71 }, { week: 'S3', taxa: 68 },
-  { week: 'S4', taxa: 75 }, { week: 'S5', taxa: 80 }, { week: 'S6', taxa: 73 },
-]
-
 export function CancellationsReport() {
   const { data: cancelData = [] } = useQuery({
     queryKey: ['reports', 'cancellations-monthly'],
