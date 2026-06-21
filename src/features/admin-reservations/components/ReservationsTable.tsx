@@ -1,5 +1,5 @@
 import { type ColumnDef } from '@tanstack/react-table'
-import { MoreHorizontal, Check, X } from 'lucide-react'
+import { MoreHorizontal, Check, X, UserCheck, CheckCheck } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DataTable } from '@/components/tables/DataTable'
 import { ReservationStatusBadge } from './ReservationStatusBadge'
@@ -32,6 +32,24 @@ export function ReservationsTable() {
       toast.success('Reserva cancelada.')
     },
     onError: () => toast.error('Erro ao cancelar reserva.'),
+  })
+
+  const checkInMutation = useMutation({
+    mutationFn: (id: string) => reservationsAdapter.update(id, { status: 'in_service' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reservations'] })
+      toast.success('Check-in realizado.')
+    },
+    onError: () => toast.error('Erro ao fazer check-in.'),
+  })
+
+  const completeMutation = useMutation({
+    mutationFn: (id: string) => reservationsAdapter.update(id, { status: 'completed' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reservations'] })
+      toast.success('Reserva concluída.')
+    },
+    onError: () => toast.error('Erro ao concluir reserva.'),
   })
 
   const columns: ColumnDef<Reservation>[] = [
@@ -76,21 +94,43 @@ export function ReservationsTable() {
       header: '',
       cell: ({ row }) => {
         const r = row.original
-        if (r.status !== 'pending') return (
-          <span className="w-8 h-8 flex items-center justify-center">
-            <MoreHorizontal className="w-4 h-4 text-muted-foreground/40" />
-          </span>
-        )
         return (
           <div className="flex items-center gap-1">
-            <button onClick={() => confirmMutation.mutate(r.id)}
-              className="w-7 h-7 rounded-md flex items-center justify-center bg-success/20 hover:bg-success/30 text-success transition-colors" title="Confirmar">
-              <Check className="w-3.5 h-3.5" />
-            </button>
-            <button onClick={() => cancelMutation.mutate(r.id)}
-              className="w-7 h-7 rounded-md flex items-center justify-center bg-danger/20 hover:bg-danger/30 text-danger transition-colors" title="Cancelar">
-              <X className="w-3.5 h-3.5" />
-            </button>
+            {r.status === 'pending' && (
+              <>
+                <button onClick={() => confirmMutation.mutate(r.id)}
+                  className="w-7 h-7 rounded-md flex items-center justify-center bg-success/20 hover:bg-success/30 text-success transition-colors" title="Confirmar">
+                  <Check className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => cancelMutation.mutate(r.id)}
+                  className="w-7 h-7 rounded-md flex items-center justify-center bg-danger/20 hover:bg-danger/30 text-danger transition-colors" title="Cancelar">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
+            {r.status === 'confirmed' && (
+              <>
+                <button onClick={() => checkInMutation.mutate(r.id)}
+                  className="w-7 h-7 rounded-md flex items-center justify-center bg-accent/20 hover:bg-accent/30 text-accent transition-colors" title="Check-in">
+                  <UserCheck className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => cancelMutation.mutate(r.id)}
+                  className="w-7 h-7 rounded-md flex items-center justify-center bg-danger/20 hover:bg-danger/30 text-danger transition-colors" title="Cancelar">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
+            {r.status === 'in_service' && (
+              <button onClick={() => completeMutation.mutate(r.id)}
+                className="w-7 h-7 rounded-md flex items-center justify-center bg-primary/20 hover:bg-primary/30 text-primary transition-colors" title="Concluir">
+                <CheckCheck className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {(r.status === 'completed' || r.status === 'cancelled') && (
+              <span className="w-8 h-8 flex items-center justify-center">
+                <MoreHorizontal className="w-4 h-4 text-muted-foreground/40" />
+              </span>
+            )}
           </div>
         )
       },
