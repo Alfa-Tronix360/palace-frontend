@@ -1,6 +1,6 @@
 import { type ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
-import { Check, X } from 'lucide-react'
+import { Check, X, Trash2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DataTable } from '@/components/tables/DataTable'
@@ -10,6 +10,7 @@ import { EVENT_TYPE_LABELS, EVENT_STATUS_LABELS } from '@/lib/constants'
 import type { Event, EventStatus } from '@/types'
 import { toast } from 'sonner'
 import { http } from '@/services/api/http'
+
 
 const statusColors: Record<EventStatus, string> = {
   pending: 'bg-warning/20 text-warning',
@@ -48,6 +49,14 @@ export function EventsTable() {
     onError: () => toast.error('Erro ao cancelar evento.'),
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => http.delete(`/events/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] })
+      toast.success('Evento eliminado.')
+    },
+    onError: () => toast.error('Erro ao eliminar evento.'),
+  })
   const columns: ColumnDef<Event>[] = [
     {
       accessorKey: 'code',
@@ -99,16 +108,27 @@ export function EventsTable() {
       header: '',
       cell: ({ row }) => {
         const e = row.original
-        if (e.status !== 'pending') return null
         return (
           <div className="flex gap-1">
-            <button onClick={() => approveMutation.mutate(e.id)}
-              className="w-7 h-7 rounded flex items-center justify-center bg-success/20 hover:bg-success/30 text-success transition-colors">
-              <Check className="w-3.5 h-3.5" />
-            </button>
-            <button onClick={() => cancelMutation.mutate(e.id)}
-              className="w-7 h-7 rounded flex items-center justify-center bg-danger/20 hover:bg-danger/30 text-danger transition-colors">
-              <X className="w-3.5 h-3.5" />
+            {e.status === 'pending' && (
+              <>
+                <button onClick={() => approveMutation.mutate(e.id)}
+                  className="w-7 h-7 rounded flex items-center justify-center bg-success/20 hover:bg-success/30 text-success transition-colors">
+                  <Check className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => cancelMutation.mutate(e.id)}
+                  className="w-7 h-7 rounded flex items-center justify-center bg-danger/20 hover:bg-danger/30 text-danger transition-colors">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
+            <button onClick={() => {
+              if (confirm(`Apagar evento ${e.code}?`)) {
+                deleteMutation.mutate(e.id)
+              }
+            }}
+              className="w-7 h-7 rounded flex items-center justify-center bg-muted hover:bg-danger/20 text-muted-foreground hover:text-danger transition-colors">
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         )
