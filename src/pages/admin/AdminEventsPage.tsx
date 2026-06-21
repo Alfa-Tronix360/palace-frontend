@@ -554,21 +554,38 @@ export default function AdminEventsPage() {
   const [description, setDescription] = useState('')
   const [bannerUrl, setBannerUrl] = useState('')
 
+  const [bannerFile, setBannerFile] = useState<File | null>(null)
+  const [bannerPreview, setBannerPreview] = useState<string>('')
+  const [uploadingBanner, setUploadingBanner] = useState(false)
+
+  async function uploadBanner(file: File): Promise<string> {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('upload_preset', 'palace_lounge')
+    const res = await fetch('https://api.cloudinary.com/v1_1/dkcq4gtxp/image/upload', {
+      method: 'POST',
+      body: formData,
+    })
+    const data = await res.json()
+    return data.secure_url
+  }
+
   const createEventMutation = useMutation({
-    mutationFn: () => http.post('/published-events', {
+    mutationFn: (finalBannerUrl?: string) => http.post('/published-events', {
       title,
       date: new Date(`${date}T12:00:00`).toISOString(),
       time,
       stage_label: stageLabel,
       description,
-      banner_url: bannerUrl || undefined,
+      banner_url: finalBannerUrl || undefined,
       base_price: 0,
       published: false,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['published-events'] })
       setTitle(''); setDate(''); setTime('21:00')
-      setStageLabel('Palco principal'); setDescription(''); setBannerUrl('')
+      setStageLabel('Palco principal'); setDescription('')
+      setBannerUrl(''); setBannerFile(null); setBannerPreview('')
     },
   })
 
@@ -578,10 +595,25 @@ export default function AdminEventsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['published-events'] }),
   })
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  // DEPOIS
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!title || !date) return
-    createEventMutation.mutate()
+
+    let finalBannerUrl = bannerUrl
+
+    if (bannerFile) {
+      setUploadingBanner(true)
+      try {
+        finalBannerUrl = await uploadBanner(bannerFile)
+      } catch {
+        setUploadingBanner(false)
+        return
+      }
+      setUploadingBanner(false)
+    }
+
+    createEventMutation.mutate(finalBannerUrl)
   }
 
   return (
@@ -639,10 +671,18 @@ export default function AdminEventsPage() {
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
           </label>
 
+          // DEPOIS
           <label className="block space-y-2">
             <span className="text-sm font-medium">Imagem do evento</span>
-            <input value={bannerUrl} onChange={e => setBannerUrl(e.target.value)} placeholder="/images/evento.png"
+            <input type="file" accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) { setBannerFile(file); setBannerPreview(URL.createObjectURL(file)) }
+              }}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+            {bannerPreview && (
+              <img src={bannerPreview} alt="Preview" className="mt-2 h-32 w-full rounded-md object-cover" />
+            )}
           </label>
 
           <label className="block space-y-2">
@@ -651,9 +691,10 @@ export default function AdminEventsPage() {
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
           </label>
 
-          <Button type="submit" disabled={!title || !date || createEventMutation.isPending} className="w-full">
+          // DEPOIS
+          <Button type="submit" disabled={!title || !date || createEventMutation.isPending || uploadingBanner} className="w-full">
             <Ticket className="h-4 w-4" />
-            {createEventMutation.isPending ? 'A publicar...' : 'Publicar evento'}
+            {uploadingBanner ? 'A carregar imagem...' : createEventMutation.isPending ? 'A publicar...' : 'Publicar evento'}
           </Button>
         </form>
 
