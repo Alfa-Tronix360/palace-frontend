@@ -57,7 +57,7 @@ function TicketModal({ event, onClose }: { event: PublishedEvent; onClose: () =>
             >
                 {/* Header */}
                 {event.bannerUrl && (
-                    <img src={event.bannerUrl} alt={event.title} className="w-full h-40 object-cover" />
+                    <img src={event.bannerUrl} alt={event.title} className="w-full object-contain" />
                 )}
                 <div className="p-5 space-y-4">
                     <div className="flex items-start justify-between">
@@ -172,7 +172,7 @@ export default function EventsPage() {
                             onClick={() => setSelectedEvent(event)}
                         >
                             {event.bannerUrl ? (
-                                <img src={event.bannerUrl} alt={event.title} className="w-full h-48 object-cover hover:scale-105 transition-transform duration-300" />
+                                <img src={event.bannerUrl} alt={event.title} className="w-full object-contain hover:scale-105 transition-transform duration-300" />
                             ) : (
                                 <div className="w-full h-48 bg-secondary flex items-center justify-center">
                                     <span className="text-muted-foreground text-sm">Clique para ver bilhetes</span>
