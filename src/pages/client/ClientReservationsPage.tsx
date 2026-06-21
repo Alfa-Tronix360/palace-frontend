@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { CalendarDays, Check, Clock, Car, Minus, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/store/auth.store'
+import { http } from '@/services/api/http'
 import { useReservationWizardStore } from '@/store/reservation-wizard.store'
 import { TIME_SLOTS, RESERVATION_STATUS_LABELS, TABLE_LOCATION_LABELS } from '@/lib/constants'
 import { cn, formatDate, formatCurrency } from '@/lib/utils'
@@ -28,6 +29,93 @@ function statusClass(status: Reservation['status']) {
   return classes[status]
 }
 
+/* ── Review Modal ─────────────────────────────────────────────────────────── */
+function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button key={star} type="button" onClick={() => onChange(star)}
+          className={cn('text-2xl transition-colors', star <= value ? 'text-yellow-400' : 'text-muted-foreground')}>
+          ★
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ReviewModal({ reservation, onClose }: { reservation: Reservation; onClose: () => void }) {
+  const queryClient = useQueryClient()
+  const [rating, setRating] = useState(5)
+  const [service, setService] = useState(5)
+  const [atmosphere, setAtmosphere] = useState(5)
+  const [food, setFood] = useState(5)
+  const [drinks, setDrinks] = useState(5)
+  const [comment, setComment] = useState('')
+
+  const mutation = useMutation({
+    mutationFn: () => http.post('/reviews', {
+      reservationId: reservation.id,
+      rating, service, atmosphere, food, drinks,
+      comment: comment || undefined,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reservations'] })
+      toast.success('Avaliação enviada! Obrigado.')
+      onClose()
+    },
+    onError: () => toast.error('Erro ao enviar avaliação.'),
+  })
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-background shadow-xl p-6 space-y-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="font-display text-xl text-primary">Avaliar visita</h2>
+            <p className="text-sm text-muted-foreground">Mesa {reservation.tableNumber} — {formatDate(reservation.date)}</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+            <X className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {[
+            { label: 'Avaliação geral', value: rating, onChange: setRating },
+            { label: 'Serviço', value: service, onChange: setService },
+            { label: 'Ambiente', value: atmosphere, onChange: setAtmosphere },
+            { label: 'Comida', value: food, onChange: setFood },
+            { label: 'Bebidas', value: drinks, onChange: setDrinks },
+          ].map(({ label, value, onChange }) => (
+            <div key={label} className="flex items-center justify-between">
+              <span className="text-sm font-medium">{label}</span>
+              <StarRating value={value} onChange={onChange} />
+            </div>
+          ))}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Comentário (opcional)</label>
+          <textarea value={comment} onChange={e => setComment(e.target.value)} rows={3}
+            placeholder="Partilhe a sua experiência..."
+            className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <button onClick={onClose}
+            className="flex-1 py-2.5 rounded-md text-sm border border-border hover:bg-secondary transition-colors">
+            Cancelar
+          </button>
+          <button onClick={() => mutation.mutate()} disabled={mutation.isPending}
+            className="flex-1 py-2.5 rounded-md text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: '#D9D0B5', color: '#181818' }}>
+            {mutation.isPending ? 'A enviar...' : 'Enviar avaliação'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 /* ── Reservation card ─────────────────────────────────────────────────────── */
 function ReservationCard({
   reservation,
@@ -39,6 +127,7 @@ function ReservationCard({
   isCancelling: boolean
 }) {
   const canCancel = reservation.status === 'pending' || reservation.status === 'confirmed'
+  const [showReview, setShowReview] = useState(false)
 
   return (
     <article className="rounded-xl border border-border bg-surface p-4 space-y-3">
@@ -68,17 +157,24 @@ function ReservationCard({
       {reservation.notes && <p className="text-sm text-muted-foreground">{reservation.notes}</p>}
 
       {canCancel && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={isCancelling}
-          onClick={() => onCancel(reservation.id)}
-          className="text-danger hover:text-danger"
-        >
+        <Button type="button" variant="outline" size="sm"
+          disabled={isCancelling} onClick={() => onCancel(reservation.id)}
+          className="text-danger hover:text-danger">
           <X className="h-4 w-4" />
           Cancelar reserva
         </Button>
+      )}
+
+      {reservation.status === 'completed' && (
+        <button onClick={() => setShowReview(true)}
+          className="flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80"
+          style={{ color: '#B89A67' }}>
+          ★ Avaliar visita
+        </button>
+      )}
+
+      {showReview && (
+        <ReviewModal reservation={reservation} onClose={() => setShowReview(false)} />
       )}
     </article>
   )

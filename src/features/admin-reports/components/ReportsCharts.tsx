@@ -28,6 +28,11 @@ const occupancyTrend = [
 ]
 
 export function CancellationsReport() {
+  const { data: cancelData = [] } = useQuery({
+    queryKey: ['reports', 'cancellations-monthly'],
+    queryFn: () => http.get<unknown, any[]>('/reports/cancellations/monthly'),
+  })
+
   return (
     <div className="rounded-xl border border-border/40 bg-surface p-5">
       <p className="text-sm font-semibold text-foreground mb-1">Cancelamentos e No-Shows</p>
@@ -46,7 +51,6 @@ export function CancellationsReport() {
     </div>
   )
 }
-
 export function TopClientsReport() {
   const { data = [] } = useQuery({
     queryKey: ['reports', 'top-clients'],
@@ -77,6 +81,11 @@ export function TopClientsReport() {
 }
 
 export function OccupancyReport() {
+  const { data: occupancyTrend = [] } = useQuery({
+    queryKey: ['reports', 'occupancy-weekly'],
+    queryFn: () => http.get<unknown, any[]>('/reports/occupancy/weekly'),
+  })
+
   return (
     <div className="rounded-xl border border-border/40 bg-surface p-5">
       <p className="text-sm font-semibold text-foreground mb-1">Taxa de Ocupação Semanal</p>
@@ -85,7 +94,7 @@ export function OccupancyReport() {
         <LineChart data={occupancyTrend} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
           <XAxis dataKey="week" tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
-          <YAxis domain={[50, 100]} tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis domain={[0, 100]} tick={{ fill: '#A89A85', fontSize: 11 }} axisLine={false} tickLine={false} />
           <Tooltip contentStyle={tooltip} formatter={(v) => [`${v}%`, '']} />
           <Line type="monotone" dataKey="taxa" name="Ocupação" stroke="#D9D0B5" strokeWidth={2.5} dot={{ fill: '#D9D0B5', r: 4 }} />
         </LineChart>
@@ -93,7 +102,6 @@ export function OccupancyReport() {
     </div>
   )
 }
-
 export function TopProductsReport() {
   const { data = [] } = useQuery({
     queryKey: ['reports', 'employee-sales'],
