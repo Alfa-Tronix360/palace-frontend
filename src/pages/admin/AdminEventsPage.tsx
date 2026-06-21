@@ -557,6 +557,7 @@ export default function AdminEventsPage() {
   const [bannerFile, setBannerFile] = useState<File | null>(null)
   const [bannerPreview, setBannerPreview] = useState<string>('')
   const [uploadingBanner, setUploadingBanner] = useState(false)
+  const [basePrice, setBasePrice] = useState('')
 
   async function uploadBanner(file: File): Promise<string> {
     const formData = new FormData()
@@ -578,14 +579,14 @@ export default function AdminEventsPage() {
       stage_label: stageLabel,
       description,
       banner_url: finalBannerUrl || undefined,
-      base_price: 0,
+      base_price: Number(basePrice) || 0,
       published: false,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['published-events'] })
       setTitle(''); setDate(''); setTime('21:00')
       setStageLabel('Palco principal'); setDescription('')
-      setBannerUrl(''); setBannerFile(null); setBannerPreview('')
+      setBannerUrl(''); setBannerFile(null); setBannerPreview(''); setBasePrice('')
     },
   })
 
@@ -667,6 +668,12 @@ export default function AdminEventsPage() {
 
           <label className="block space-y-2">
             <span className="text-sm font-medium">Nome do palco</span>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Preço base (Kz)</span>
+              <input type="number" min="0" value={basePrice} onChange={e => setBasePrice(e.target.value)}
+                placeholder="Ex: 15000"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+            </label>
             <input value={stageLabel} onChange={e => setStageLabel(e.target.value)}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
           </label>
