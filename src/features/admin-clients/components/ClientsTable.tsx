@@ -1,11 +1,12 @@
 import { type ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
-import { Eye, Star } from 'lucide-react'
+import { Eye, Star, Trash2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DataTable } from '@/components/tables/DataTable'
 import { clientsAdapter } from '@/services/adapters/clients.adapter'
 import { formatCurrency, formatDate, getInitials } from '@/lib/utils'
+import { toast } from 'sonner'
 import type { User } from '@/types'
 
 export function ClientsTable() {
@@ -14,6 +15,18 @@ export function ClientsTable() {
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ['clients'],
     queryFn: () => clientsAdapter.getAll(),
+  })
+
+  const queryClient = useQueryClient()
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => clientsAdapter.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] })
+      toast.success('Cliente eliminado.')
+      setSelected(null)
+    },
+    onError: () => toast.error('Erro ao eliminar cliente.'),
   })
 
   const columns: ColumnDef<User>[] = [
@@ -70,10 +83,20 @@ export function ClientsTable() {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
-        <button onClick={() => setSelected(row.original)}
-          className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
-          <Eye className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setSelected(row.original)}
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
+            <Eye className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={() => {
+            if (confirm(`Apagar "${row.original.name}"?`)) {
+              deleteMutation.mutate(row.original.id)
+            }
+          }}
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-danger/30 hover:bg-danger/10 transition-colors text-danger">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
       ),
       enableSorting: false,
     },

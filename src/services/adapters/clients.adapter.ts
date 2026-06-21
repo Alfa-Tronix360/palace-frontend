@@ -20,4 +20,11 @@ export const clientsAdapter = {
     const client = await http.patch<unknown, User>(`/clients/${id}`, data)
     return normalizeUser(client)
   },
+
+
+
+async delete(id: string): Promise<void> {
+  await http.delete(`/clients/${id}`)
+},
+
 }
