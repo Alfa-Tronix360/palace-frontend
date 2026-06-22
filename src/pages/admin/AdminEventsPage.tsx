@@ -738,6 +738,19 @@ export default function AdminEventsPage() {
                       </div>
                       <div className="flex gap-2">
                         <Button type="button" variant="outline"
+                          onClick={() => {
+                            setTitle(event.title)
+                            setDate(event.date.split('T')[0])
+                            setTime(event.time)
+                            setStageLabel(event.stage_label)
+                            setDescription(event.description || '')
+                            setBasePrice(String(event.base_price || 0))
+                            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+                            toast.info('Edita o evento no formulário abaixo e publica novamente.')
+                          }}>
+                          Editar
+                        </Button>
+                        <Button type="button" variant="outline"
                           onClick={() => togglePublishMutation.mutate({ id: event.id, published: event.published })}>
                           <Eye className="h-4 w-4" />
                           {event.published ? 'Publicado' : 'Oculto'}
@@ -754,7 +767,7 @@ export default function AdminEventsPage() {
                       </div>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
-                      {event.seats?.slice(0, 8).map((seat: any) => (
+                      {event.seats?.sort((a: any, b: any) => a.table_number - b.table_number).map((seat: any) => (
                         <span key={seat.id} className="rounded-full border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground">
                           Mesa {seat.table_number}: {formatCurrency(seat.price)}
                         </span>
