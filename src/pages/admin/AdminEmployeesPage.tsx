@@ -151,7 +151,6 @@ export default function AdminEmployeesPage() {
             </div>
             <div className="divide-y divide-border/40">
               {employees.length ? employees.map((employee) => {
-                const table = tables.find((t) => t.id === employee.tableId)
                 return (
                   <div key={employee.id} className="grid gap-3 p-4 md:grid-cols-[1fr_180px] md:items-center">
                     <div>
