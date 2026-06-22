@@ -1,5 +1,9 @@
 import { useMemo } from 'react'
+import { Trash2 } from 'lucide-react'
 import { useVenueStore } from '@/store/venue.store'
+import { http } from '@/services/api/http'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import type { TableStatus } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -28,18 +32,34 @@ function StatCard({ label, value, className }: { label: string; value: number; c
 
 export default function AdminTablesPage() {
   const tables = useVenueStore((state) => state.tables)
+  const removeTable = useVenueStore((state) => state.removeTable)
 
   const stats = useMemo(() => ({
-    occupied: tables.filter((table) => table.status === 'occupied').length,
-    reserved: tables.filter((table) => table.status === 'reserved').length,
-    available: tables.filter((table) => table.status === 'available').length,
-    vip: tables.filter((table) => table.location === 'vip').length,
+    occupied: tables.filter((t) => t.status === 'occupied').length,
+    reserved: tables.filter((t) => t.status === 'reserved').length,
+    available: tables.filter((t) => t.status === 'available').length,
+    vip: tables.filter((t) => t.location === 'vip').length,
   }), [tables])
 
   const sortedTables = useMemo(
     () => [...tables].sort((a, b) => a.number - b.number),
     [tables]
   )
+
+  async function handleDelete(id: string, number: number, status: TableStatus) {
+    if (status !== 'available') {
+      toast.error('Só é possível apagar mesas vagas.')
+      return
+    }
+    if (!confirm(`Apagar Mesa ${number}?`)) return
+    try {
+      await http.delete(`/venue/tables/${id}`)
+      removeTable(id)
+      toast.success(`Mesa ${number} apagada.`)
+    } catch {
+      toast.error('Erro ao apagar mesa.')
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -65,6 +85,7 @@ export default function AdminTablesPage() {
               <th className="px-4 py-3">Mesa</th>
               <th className="px-4 py-3">Lugares</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -76,6 +97,17 @@ export default function AdminTablesPage() {
                   <span className={cn('inline-flex rounded-full px-2.5 py-1 text-xs font-medium', statusBadgeStyles[table.status])}>
                     {statusLabels[table.status]}
                   </span>
+                </td>
+                <td className="px-4 py-3">
+                  {table.status === 'available' && (
+                    <button
+                      onClick={() => handleDelete(table.id, table.number, table.status)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg border border-danger/30 hover:bg-danger/10 transition-colors text-danger"
+                      title="Apagar mesa"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

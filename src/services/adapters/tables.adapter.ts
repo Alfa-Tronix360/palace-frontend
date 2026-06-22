@@ -14,6 +14,7 @@ function normalizeTable(item: any): Table {
     areaId: item.area_id ? String(item.area_id) : undefined,
     priceTier: item.price_tier,
     imageUrl: item.image_url,
+    price: item.price,
   }
 }
 

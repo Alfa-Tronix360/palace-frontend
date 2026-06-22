@@ -45,6 +45,7 @@ interface VenueState {
   mergeAreas: (primaryId: string, secondaryId: string) => void
   addTable: (areaId?: string) => void
   updateTable: (id: string, data: VenueTableUpdate) => void
+  removeTable: (id: string) => void
   registerWalkInClient: (data: { name: string; email?: string; phone: string }) => User
   reserveTableForWalkIn: (data: { clientId: string; tableId: string; guests: number; time: string; notes?: string; occupyNow?: boolean }) => Reservation
   occupyTable: (tableId: string) => void
@@ -240,6 +241,11 @@ export const useVenueStore = create<VenueState>()(
         }))
       },
 
+    removeTable: (id) => {
+         set((state) => ({
+          tables: state.tables.filter((table) => table.id !== id),
+        }))
+       },
       registerWalkInClient: (data) => {
         const client: User = {
           id: `walkin-${Date.now()}`,
