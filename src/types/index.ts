@@ -97,12 +97,19 @@ export interface DigitalTicket {
 
 export type EmployeeRole = 'attendant' | 'seller' | 'operator'
 
+export interface AssignedTable {
+  id: string
+  tableId: string
+  tableNumber: number
+}
+
 export interface Employee {
   id: string
   name: string
   phone: string
   role: EmployeeRole
   tableId?: string
+  assignedTables?: AssignedTable[]
   active: boolean
   createdAt: Date
 }

@@ -58,9 +58,9 @@ export default function AdminEmployeesPage() {
     onError: () => toast.error('Erro ao cadastrar funcionario.'),
   })
 
-  const assignTableMutation = useMutation({
-    mutationFn: ({ employeeId, tableId }: { employeeId: string; tableId?: string }) =>
-      employeesAdapter.assignTable(employeeId, tableId),
+  const toggleTableMutation = useMutation({
+    mutationFn: ({ employeeId, tableId }: { employeeId: string; tableId: string }) =>
+      employeesAdapter.toggleTable(employeeId, tableId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
     onError: () => toast.error('Erro ao atribuir mesa.'),
   })
@@ -158,13 +158,24 @@ export default function AdminEmployeesPage() {
                       <p className="font-medium">{employee.name}</p>
                       <p className="text-sm text-muted-foreground">{roleLabels[employee.role]} | {employee.phone}</p>
                     </div>
-                    <select
-                      value={employee.tableId || ''}
-                      onChange={(e) => assignTableMutation.mutate({ employeeId: employee.id, tableId: e.target.value || undefined })}
-                      className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-                      <option value="">{table ? `Mesa ${table.number}` : 'Sem mesa fixa'}</option>
-                      {tables.map((t) => <option key={t.id} value={t.id}>Mesa {t.number}</option>)}
-                    </select>
+                    <div className="flex flex-wrap gap-2">
+                      {tables.map((t) => {
+                        const assigned = employee.assignedTables?.some((at) => at.tableId === t.id)
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => toggleTableMutation.mutate({ employeeId: employee.id, tableId: t.id })}
+                            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${assigned
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-border bg-background text-muted-foreground hover:border-primary/50'
+                              }`}
+                          >
+                            Mesa {t.number}
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
                 )
               }) : (

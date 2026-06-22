@@ -8,6 +8,11 @@ function normalizeEmployee(item: any): Employee {
     phone: item.phone,
     role: item.role,
     tableId: item.table_id ? String(item.table_id) : undefined,
+    assignedTables: (item.assigned_tables || []).map((at: any) => ({
+      id: String(at.id),
+      tableId: String(at.table_id),
+      tableNumber: at.table_number,
+    })),
     active: item.active ?? true,
     createdAt: new Date(item.created_at),
   }
@@ -42,6 +47,11 @@ export const employeesAdapter = {
     const employee = await http.post<unknown, any>(`/employees/${id}/assign-table`, {
       table_id: tableId ? Number(tableId) : null,
     })
+    return normalizeEmployee(employee)
+  },
+
+  async toggleTable(employeeId: string, tableId: string): Promise<Employee> {
+    const employee = await http.post<unknown, any>(`/employees/${employeeId}/toggle-table/${tableId}`, {})
     return normalizeEmployee(employee)
   },
 
