@@ -47,7 +47,7 @@ export default function AdminEmployeesPage() {
       role,
       table_id: tableId ? Number(tableId) : undefined,
     }),
-    onSuccess: (employee) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
       setName('')
       setPhone('')
@@ -64,6 +64,7 @@ export default function AdminEmployeesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
     onError: () => toast.error('Erro ao atribuir mesa.'),
   })
+
 
 
 
