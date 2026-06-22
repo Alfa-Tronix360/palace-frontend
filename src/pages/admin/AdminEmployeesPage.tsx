@@ -1,5 +1,5 @@
 import { FormEvent, useMemo, useState } from 'react'
-import { ClipboardList, Plus, Trophy, UserCog } from 'lucide-react'
+import { Plus, Trophy, UserCog } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -38,11 +38,7 @@ export default function AdminEmployeesPage() {
   const [role, setRole] = useState<EmployeeRole>('attendant')
   const [tableId, setTableId] = useState('')
 
-  const [orderEmployeeId, setOrderEmployeeId] = useState('')
-  const [orderTableId, setOrderTableId] = useState('')
-  const [itemName, setItemName] = useState('')
-  const [quantity, setQuantity] = useState(1)
-  const [price, setPrice] = useState(0)
+
 
   const createEmployeeMutation = useMutation({
     mutationFn: () => employeesAdapter.create({
@@ -57,8 +53,6 @@ export default function AdminEmployeesPage() {
       setPhone('')
       setRole('attendant')
       setTableId('')
-      setOrderEmployeeId(employee.id)
-      setOrderTableId(employee.tableId || tables[0]?.id || '')
       toast.success('Funcionario cadastrado.')
     },
     onError: () => toast.error('Erro ao cadastrar funcionario.'),
@@ -71,21 +65,7 @@ export default function AdminEmployeesPage() {
     onError: () => toast.error('Erro ao atribuir mesa.'),
   })
 
-  const createOrderMutation = useMutation({
-    mutationFn: () => employeesAdapter.createOrder({
-      employeeId: orderEmployeeId,
-      tableId: orderTableId,
-      items: [{ name: itemName.trim(), quantity, price }],
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employee-orders'] })
-      setItemName('')
-      setQuantity(1)
-      setPrice(0)
-      toast.success('Pedido lancado na mesa.')
-    },
-    onError: () => toast.error('Nao foi possivel lancar o pedido.'),
-  })
+
 
   const topEmployees = useMemo(() => {
     return employeeOrders
@@ -117,11 +97,7 @@ export default function AdminEmployeesPage() {
     createEmployeeMutation.mutate()
   }
 
-  function handleCreateOrder(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!orderEmployeeId || !orderTableId || !itemName.trim() || quantity <= 0 || price <= 0) return
-    createOrderMutation.mutate()
-  }
+
 
   return (
     <div className="space-y-6">
@@ -166,48 +142,7 @@ export default function AdminEmployeesPage() {
             </Button>
           </form>
 
-          <form onSubmit={handleCreateOrder} className="rounded-xl border border-border/40 bg-surface p-5 space-y-4">
-            <div className="flex items-center gap-2">
-              <ClipboardList className="h-5 w-5 text-primary" />
-              <h2 className="font-semibold">Lancar pedido da mesa</h2>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="block space-y-2">
-                <span className="text-sm font-medium">Funcionario</span>
-                <select value={orderEmployeeId} onChange={(e) => {
-                  const emp = employees.find((item) => item.id === e.target.value)
-                  setOrderEmployeeId(e.target.value)
-                  setOrderTableId(emp?.tableId || tables[0]?.id || '')
-                }} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-                  <option value="">Selecione</option>
-                  {employees.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
-                </select>
-              </label>
-              <label className="block space-y-2">
-                <span className="text-sm font-medium">Mesa</span>
-                <select value={orderTableId} onChange={(e) => setOrderTableId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-                  {tables.map((t) => <option key={t.id} value={t.id}>Mesa {t.number}</option>)}
-                </select>
-              </label>
-              <label className="block space-y-2">
-                <span className="text-sm font-medium">Produto/servico</span>
-                <input value={itemName} onChange={(e) => setItemName(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium">Qtd.</span>
-                  <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-                </label>
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium">Preco</span>
-                  <input type="number" min={0} value={price} onChange={(e) => setPrice(Number(e.target.value))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-                </label>
-              </div>
-            </div>
-            <Button type="submit" disabled={!orderEmployeeId || !orderTableId || !itemName.trim() || price <= 0 || createOrderMutation.isPending}>
-              <Plus className="h-4 w-4" /> Lancar pedido
-            </Button>
-          </form>
+
 
           <div className="rounded-xl border border-border/40 bg-surface">
             <div className="border-b border-border/40 p-5">

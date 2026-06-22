@@ -1,7 +1,12 @@
-import { useMemo } from 'react'
-import { Trash2 } from 'lucide-react'
+import { FormEvent, useMemo, useState } from 'react'
+import { ClipboardList, Plus, Trash2 } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button } from '@/components/ui/button'
 import { useVenueStore } from '@/store/venue.store'
 import { http } from '@/services/api/http'
+import { tablesAdapter } from '@/services/adapters/tables.adapter'
+import { employeesAdapter } from '@/services/adapters/employees.adapter'
+import { formatCurrency } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { TableStatus } from '@/types'
 import { cn } from '@/lib/utils'
@@ -32,6 +37,45 @@ function StatCard({ label, value, className }: { label: string; value: number; c
 export default function AdminTablesPage() {
   const tables = useVenueStore((state) => state.tables)
   const removeTable = useVenueStore((state) => state.removeTable)
+  const queryClient = useQueryClient()
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees'],
+    queryFn: () => employeesAdapter.getAll(),
+  })
+
+  const { data: apiTables = [] } = useQuery({
+    queryKey: ['tables'],
+    queryFn: () => tablesAdapter.getAll(),
+  })
+
+  const [orderEmployeeId, setOrderEmployeeId] = useState('')
+  const [orderTableId, setOrderTableId] = useState('')
+  const [itemName, setItemName] = useState('')
+  const [quantity, setQuantity] = useState(1)
+  const [price, setPrice] = useState(0)
+
+  const createOrderMutation = useMutation({
+    mutationFn: () => employeesAdapter.createOrder({
+      employeeId: orderEmployeeId,
+      tableId: orderTableId,
+      items: [{ name: itemName.trim(), quantity, price }],
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employee-orders'] })
+      setItemName('')
+      setQuantity(1)
+      setPrice(0)
+      toast.success('Pedido lancado na mesa.')
+    },
+    onError: () => toast.error('Nao foi possivel lancar o pedido.'),
+  })
+
+  function handleCreateOrder(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!orderEmployeeId || !orderTableId || !itemName.trim() || quantity <= 0 || price <= 0) return
+    createOrderMutation.mutate()
+  }
 
   const stats = useMemo(() => ({
     occupied: tables.filter((t) => t.status === 'occupied').length,
@@ -113,6 +157,49 @@ export default function AdminTablesPage() {
           </tbody>
         </table>
       </div>
+
+      <form onSubmit={handleCreateOrder} className="rounded-xl border border-border/40 bg-surface p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <ClipboardList className="h-5 w-5 text-primary" />
+          <h2 className="font-semibold">Lancar pedido da mesa</h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block space-y-2">
+            <span className="text-sm font-medium">Funcionario</span>
+            <select value={orderEmployeeId} onChange={(e) => {
+              const emp = employees.find((item) => item.id === e.target.value)
+              setOrderEmployeeId(e.target.value)
+              setOrderTableId(emp?.tableId || apiTables[0]?.id || '')
+            }} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+              <option value="">Selecione</option>
+              {employees.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
+            </select>
+          </label>
+          <label className="block space-y-2">
+            <span className="text-sm font-medium">Mesa</span>
+            <select value={orderTableId} onChange={(e) => setOrderTableId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+              {apiTables.map((t) => <option key={t.id} value={t.id}>Mesa {t.number}</option>)}
+            </select>
+          </label>
+          <label className="block space-y-2">
+            <span className="text-sm font-medium">Produto/servico</span>
+            <input value={itemName} onChange={(e) => setItemName(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Qtd.</span>
+              <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+            </label>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Preco</span>
+              <input type="number" min={0} value={price} onChange={(e) => setPrice(Number(e.target.value))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+            </label>
+          </div>
+        </div>
+        <Button type="submit" disabled={!orderEmployeeId || !orderTableId || !itemName.trim() || price <= 0 || createOrderMutation.isPending}>
+          <Plus className="h-4 w-4" /> Administrar Mesas
+        </Button>
+      </form>
     </div>
   )
 }
