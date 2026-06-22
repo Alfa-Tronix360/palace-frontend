@@ -530,10 +530,20 @@ function VenueMapSection() {
 
 export default function AdminEventsPage() {
   const queryClient = useQueryClient()
-
+  const [editingEvent, setEditingEvent] = useState<any | null>(null)
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
     queryFn: () => http.get<unknown, any[]>('/events'),
+  })
+
+  const updateEventMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => http.patch(`/published-events/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['published-events'] })
+      setEditingEvent(null)
+      toast.success('Evento atualizado.')
+    },
+    onError: () => toast.error('Erro ao atualizar evento.'),
   })
 
   const { data: publishedEvents = [] } = useQuery({
@@ -738,16 +748,7 @@ export default function AdminEventsPage() {
                       </div>
                       <div className="flex gap-2">
                         <Button type="button" variant="outline"
-                          onClick={() => {
-                            setTitle(event.title)
-                            setDate(event.date.split('T')[0])
-                            setTime(event.time)
-                            setStageLabel(event.stage_label)
-                            setDescription(event.description || '')
-                            setBasePrice(String(event.base_price || 0))
-                            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
-                            toast.info('Edita o evento no formulário abaixo e publica novamente.')
-                          }}>
+                          onClick={() => setEditingEvent(event)}>
                           Editar
                         </Button>
                         <Button type="button" variant="outline"
@@ -784,6 +785,68 @@ export default function AdminEventsPage() {
           )}
         </div>
       </section>
+
+      {editingEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-background shadow-xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl text-primary">Editar Evento</h2>
+              <button onClick={() => setEditingEvent(null)} className="text-muted-foreground hover:text-foreground text-xl">×</button>
+            </div>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Nome do evento</span>
+              <input value={editingEvent.title} onChange={e => setEditingEvent({ ...editingEvent, title: e.target.value })}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+            </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Data</span>
+                <input type="date" value={editingEvent.date?.split('T')[0]} onChange={e => setEditingEvent({ ...editingEvent, date: e.target.value })}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Hora</span>
+                <input type="time" value={editingEvent.time} onChange={e => setEditingEvent({ ...editingEvent, time: e.target.value })}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+              </label>
+            </div>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Nome do palco</span>
+              <input value={editingEvent.stage_label} onChange={e => setEditingEvent({ ...editingEvent, stage_label: e.target.value })}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+            </label>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Preço base (Kz)</span>
+              <input type="number" min="0" value={editingEvent.base_price} onChange={e => setEditingEvent({ ...editingEvent, base_price: Number(e.target.value) })}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+            </label>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Descrição</span>
+              <textarea value={editingEvent.description || ''} onChange={e => setEditingEvent({ ...editingEvent, description: e.target.value })} rows={3}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
+            </label>
+            <div className="flex gap-2 pt-2 border-t border-border">
+              <button onClick={() => setEditingEvent(null)}
+                className="flex-1 py-2.5 rounded-md text-sm border border-border hover:bg-secondary transition-colors">
+                Cancelar
+              </button>
+              <Button className="flex-1" onClick={() => updateEventMutation.mutate({
+                id: editingEvent.id,
+                data: {
+                  title: editingEvent.title,
+                  date: new Date(`${editingEvent.date?.split('T')[0]}T12:00:00`).toISOString(),
+                  time: editingEvent.time,
+                  stage_label: editingEvent.stage_label,
+                  description: editingEvent.description,
+                  base_price: editingEvent.base_price,
+                }
+              })} disabled={updateEventMutation.isPending}>
+                {updateEventMutation.isPending ? 'A guardar...' : 'Guardar'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
