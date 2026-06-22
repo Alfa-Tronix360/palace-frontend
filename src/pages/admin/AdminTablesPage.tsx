@@ -160,7 +160,7 @@ export default function AdminTablesPage() {
       <form onSubmit={handleCreateOrder} className="rounded-xl border border-border/40 bg-surface p-5 space-y-4">
         <div className="flex items-center gap-2">
           <ClipboardList className="h-5 w-5 text-primary" />
-          <h2 className="font-semibold">Lancar pedido da mesa</h2>
+          <h2 className="font-semibold">Administrar Mesas</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block space-y-2">
@@ -196,7 +196,7 @@ export default function AdminTablesPage() {
           </div>
         </div>
         <Button type="submit" disabled={!orderEmployeeId || !orderTableId || !itemName.trim() || price <= 0 || createOrderMutation.isPending}>
-          <Plus className="h-4 w-4" /> Administrar Mesas
+          <Plus className="h-4 w-4" /> Lançar Pedido
         </Button>
       </form>
     </div>
