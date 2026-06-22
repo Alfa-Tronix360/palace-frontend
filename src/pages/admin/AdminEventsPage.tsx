@@ -279,7 +279,7 @@ function VenueMapSection() {
           </p>
         </div>
 
-        <aside className="space-y-5 max-h-[700px] overflow-y-auto pr-1">
+        <aside className="space-y-5">
           <section className="rounded-xl border border-border bg-surface p-5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
