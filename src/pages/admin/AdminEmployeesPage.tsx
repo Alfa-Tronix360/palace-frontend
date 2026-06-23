@@ -37,6 +37,7 @@ export default function AdminEmployeesPage() {
   const [phone, setPhone] = useState('')
   const [role, setRole] = useState<EmployeeRole>('attendant')
   const [selectedTableIds, setSelectedTableIds] = useState<string[]>([])
+  const [editingEmployee, setEditingEmployee] = useState<any | null>(null)
 
   function toggleTableSelection(id: string) {
     setSelectedTableIds((prev) =>
@@ -160,18 +161,18 @@ export default function AdminEmployeesPage() {
             </div>
             <div className="divide-y divide-border/40">
               {employees.length ? employees.map((employee) => (
-                <div key={employee.id} className="p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{employee.name}</p>
-                      <p className="text-sm text-muted-foreground">{roleLabels[employee.role]} | {employee.phone}</p>
-                    </div>
+                <div key={employee.id} className="p-4 flex items-center justify-between cursor-pointer hover:bg-secondary/30 transition-colors"
+                  onClick={() => setEditingEmployee(employee)}>
+                  <div>
+                    <p className="font-medium">{employee.name}</p>
+                    <p className="text-sm text-muted-foreground">{roleLabels[employee.role]} | {employee.phone}</p>
+                    {employee.assignedTables && employee.assignedTables.length > 0 && (
+                      <p className="text-xs text-accent mt-0.5">
+                        {employee.assignedTables.length} mesa(s): {employee.assignedTables.map((at) => `Mesa ${at.tableNumber}`).join(', ')}
+                      </p>
+                    )}
                   </div>
-                  {employee.assignedTables && employee.assignedTables.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Mesas: {employee.assignedTables.map((at) => `Mesa ${at.tableNumber}`).join(', ')}
-                    </p>
-                  )}
+                  <span className="text-xs text-muted-foreground">Editar →</span>
                 </div>
               )) : (
                 <div className="p-5 text-sm text-muted-foreground">Ainda nao existem funcionarios cadastrados.</div>
@@ -185,7 +186,72 @@ export default function AdminEmployeesPage() {
           <RankingCard title="Mesas que mais rendem" subtitle="Pedidos lancados por mesa" items={topTables} />
         </aside>
       </div>
+      {editingEmployee && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-background shadow-xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl text-primary">Editar Funcionario</h2>
+              <button onClick={() => setEditingEmployee(null)} className="text-muted-foreground hover:text-foreground text-xl">×</button>
+            </div>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Nome</span>
+              <input value={editingEmployee.name} onChange={e => setEditingEmployee({ ...editingEmployee, name: e.target.value })}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+            </label>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Telefone</span>
+              <input value={editingEmployee.phone} onChange={e => setEditingEmployee({ ...editingEmployee, phone: e.target.value })}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+            </label>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Funcao</span>
+              <select value={editingEmployee.role} onChange={e => setEditingEmployee({ ...editingEmployee, role: e.target.value })}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                {Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </label>
+            <div className="space-y-2">
+              <span className="text-sm font-medium">Mesas atribuidas</span>
+              <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                {tables.map((t) => {
+                  const assigned = editingEmployee.assignedTables?.some((at: any) => at.tableId === t.id)
+                  return (
+                    <label key={t.id} className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={!!assigned}
+                        onChange={() => {
+                          const updated = assigned
+                            ? editingEmployee.assignedTables.filter((at: any) => at.tableId !== t.id)
+                            : [...(editingEmployee.assignedTables || []), { tableId: t.id, tableNumber: t.number }]
+                          setEditingEmployee({ ...editingEmployee, assignedTables: updated })
+                          employeesAdapter.toggleTable(editingEmployee.id, t.id)
+                        }}
+                        className="rounded border-border" />
+                      <span className="text-sm">Mesa {t.number}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2 border-t border-border">
+              <button onClick={() => setEditingEmployee(null)}
+                className="flex-1 py-2.5 rounded-md text-sm border border-border hover:bg-secondary transition-colors">
+                Fechar
+              </button>
+              <Button className="flex-1" onClick={async () => {
+                await employeesAdapter.assignTable(editingEmployee.id, editingEmployee.tableId)
+                queryClient.invalidateQueries({ queryKey: ['employees'] })
+                setEditingEmployee(null)
+                toast.success('Funcionario atualizado.')
+              }}>
+                Guardar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
+
   )
 }
 
@@ -213,6 +279,7 @@ function RankingCard({ title, subtitle, items }: { title: string; subtitle: stri
             O ranking aparece depois dos primeiros pedidos lancados.
           </div>
         )}
+
       </div>
     </section>
   )
