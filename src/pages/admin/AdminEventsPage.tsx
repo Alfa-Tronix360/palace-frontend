@@ -184,17 +184,25 @@ function PalaceMap({
   )
 }
 
-function VenueMapSection() {
+function VenueMapSection({
+  selectedTableId,
+  setSelectedTableId,
+  selectedAreaId,
+  setSelectedAreaId,
+}: {
+  selectedTableId?: string
+  setSelectedTableId: (id: string) => void
+  selectedAreaId?: string
+  setSelectedAreaId: (id: string) => void
+}) {
   const areas = useVenueStore((state) => state.areas)
   const tables = useVenueStore((state) => state.tables)
   const updateArea = useVenueStore((state) => state.updateArea)
   const updateTable = useVenueStore((state) => state.updateTable)
-  const [selectedId, setSelectedId] = useState(tables[0]?.id)
-  const [selectedAreaId, setSelectedAreaId] = useState(areas[0]?.id)
   const [moving, setMoving] = useState<MoveTarget | null>(null)
   const [resizing, setResizing] = useState<ResizeTarget | null>(null)
-  const selected = tables.find((table) => table.id === selectedId) ?? tables[0]
-  const selectedArea = areas.find((area) => area.id === selectedAreaId) ?? areas[0]
+  const selected = tables.find((t) => t.id === selectedTableId) ?? tables[0]
+  const selectedArea = areas.find((a) => a.id === selectedAreaId) ?? areas[0]
 
   function moveSelectedTo(x: number, y: number) {
     if (!moving) return
@@ -248,7 +256,7 @@ function VenueMapSection() {
           selectedAreaId={selectedArea?.id}
           moving={moving}
           resizing={resizing}
-          onSelect={(table) => setSelectedId(table.id)}
+          onSelect={(table) => setSelectedTableId(table.id)}
           onSelectArea={(area) => setSelectedAreaId(area.id)}
           onStartMove={setMoving}
           onStartResize={setResizing}
@@ -267,7 +275,19 @@ function VenueMapSection() {
 /* ──────────────────────────────────────────────────────────────────────────
  * Página Eventos (conteúdo original)
  * ────────────────────────────────────────────────────────────────────────── */
-function VenueAreasSection({ showAreas = true, showMesa = true }: { showAreas?: boolean; showMesa?: boolean }) {
+function VenueAreasSection({
+  showAreas = true,
+  showMesa = true,
+  selectedTableId,
+  selectedAreaId,
+  setSelectedAreaId,
+}: {
+  showAreas?: boolean
+  showMesa?: boolean
+  selectedTableId?: string
+  selectedAreaId?: string
+  setSelectedAreaId?: (id: string) => void
+}) {
   const areas = useVenueStore((state) => state.areas)
   const tables = useVenueStore((state) => state.tables)
   const addArea = useVenueStore((state) => state.addArea)
@@ -276,10 +296,8 @@ function VenueAreasSection({ showAreas = true, showMesa = true }: { showAreas?: 
   const mergeAreas = useVenueStore((state) => state.mergeAreas)
   const addTable = useVenueStore((state) => state.addTable)
   const updateTable = useVenueStore((state) => state.updateTable)
-  const [selectedId] = useState(tables[0]?.id)
-  const [selectedAreaId, setSelectedAreaId] = useState(areas[0]?.id)
   const [mergeAreaId, setMergeAreaId] = useState('')
-  const selected = tables.find((table) => table.id === selectedId) ?? tables[0]
+  const selected = tables.find((table) => table.id === selectedTableId) ?? tables[0]
   const selectedArea = areas.find((area) => area.id === selectedAreaId) ?? areas[0]
 
   return (
@@ -304,7 +322,7 @@ function VenueAreasSection({ showAreas = true, showMesa = true }: { showAreas?: 
             <div className="mt-5 space-y-4">
               <label className="block space-y-2">
                 <span className="text-sm font-medium">Area selecionada</span>
-                <select value={selectedArea.id} onChange={(e) => setSelectedAreaId(e.target.value)}
+                <select value={selectedArea.id} onChange={(e) => setSelectedAreaId?.(e.target.value)}
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
                   {areas.map((area) => <option key={area.id} value={area.id}>{area.name}</option>)}
                 </select>
@@ -441,6 +459,8 @@ function VenueAreasSection({ showAreas = true, showMesa = true }: { showAreas?: 
 
 export default function AdminEventsPage() {
   const queryClient = useQueryClient()
+  const [selectedTableId, setSelectedTableId] = useState<string | undefined>(undefined)
+  const [selectedAreaId, setSelectedAreaId] = useState<string | undefined>(undefined)
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
@@ -567,12 +587,21 @@ export default function AdminEventsPage() {
       <EventsTable />
 
       {/* MAPA NO TOPO */}
-      <VenueMapSection />
+      <VenueMapSection
+        selectedTableId={selectedTableId}
+        setSelectedTableId={setSelectedTableId}
+        selectedAreaId={selectedAreaId}
+        setSelectedAreaId={setSelectedAreaId}
+      />
 
       {/* AREAS DO MAPA + PUBLICAR FESTA lado a lado */}
       <section className="grid gap-6 xl:grid-cols-2">
         {/* AREAS DO MAPA */}
-        <VenueAreasSection />
+        <VenueAreasSection
+          selectedTableId={selectedTableId}
+          selectedAreaId={selectedAreaId}
+          setSelectedAreaId={setSelectedAreaId}
+        />
         {/* PUBLICAR FESTA */}
         <form onSubmit={onSubmit} className="rounded-xl border border-border bg-surface p-5 space-y-4">
           <div>
