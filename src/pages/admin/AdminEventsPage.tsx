@@ -2,7 +2,7 @@ import { type MouseEvent, type FormEvent, useState } from 'react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import {
-  Armchair, CalendarDays, Eye, Image, Map, Move, Plus, Ticket, Trash2, Users,
+  Armchair, CalendarDays, Eye, Image, Map, Plus, Ticket, Trash2, Users,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
@@ -276,9 +276,8 @@ function VenueAreasSection() {
   const mergeAreas = useVenueStore((state) => state.mergeAreas)
   const addTable = useVenueStore((state) => state.addTable)
   const updateTable = useVenueStore((state) => state.updateTable)
-  const [selectedId, setSelectedId] = useState(tables[0]?.id)
+  const [selectedId] = useState(tables[0]?.id)
   const [selectedAreaId, setSelectedAreaId] = useState(areas[0]?.id)
-  const [moving, setMoving] = useState<MoveTarget | null>(null)
   const [mergeAreaId, setMergeAreaId] = useState('')
   const selected = tables.find((table) => table.id === selectedId) ?? tables[0]
   const selectedArea = areas.find((area) => area.id === selectedAreaId) ?? areas[0]
