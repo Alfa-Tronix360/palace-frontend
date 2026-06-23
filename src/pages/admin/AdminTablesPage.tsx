@@ -11,9 +11,9 @@ import type { TableStatus } from '@/types'
 import { cn } from '@/lib/utils'
 
 const statusBadgeStyles: Record<TableStatus, string> = {
-  occupied: 'bg-success/15 text-success',
+  occupied: 'bg-danger/15 text-danger',
   reserved: 'bg-warning/15 text-warning',
-  available: 'bg-danger/15 text-danger',
+  available: 'bg-success/15 text-success',
   maintenance: 'bg-muted text-muted-foreground',
 }
 

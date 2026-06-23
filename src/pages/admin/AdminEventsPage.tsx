@@ -21,9 +21,9 @@ type ResizeEdge = 'left' | 'right' | 'top' | 'bottom'
 type ResizeTarget = { id: string; edge: ResizeEdge }
 
 const statusStyles: Record<TableStatus, string> = {
-  occupied: 'bg-success text-white border-success',
+  occupied: 'bg-danger text-white border-danger',
   reserved: 'bg-warning text-background border-warning',
-  available: 'bg-danger text-white border-danger',
+  available: 'bg-success text-white border-success',
   maintenance: 'bg-muted text-muted-foreground border-border',
 }
 
