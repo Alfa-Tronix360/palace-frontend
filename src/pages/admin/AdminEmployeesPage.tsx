@@ -36,32 +36,21 @@ export default function AdminEmployeesPage() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [role, setRole] = useState<EmployeeRole>('attendant')
-  const [selectedTableIds, setSelectedTableIds] = useState<string[]>([])
   const [editingEmployee, setEditingEmployee] = useState<any | null>(null)
 
-  function toggleTableSelection(id: string) {
-    setSelectedTableIds((prev) =>
-      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
-    )
-  }
+
 
   const createEmployeeMutation = useMutation({
     mutationFn: () => employeesAdapter.create({
       name: name.trim(),
       phone: phone.trim(),
       role,
-      table_id: selectedTableIds.length > 0 ? Number(selectedTableIds[0]) : undefined,
     }),
-    onSuccess: async (employee) => {
-      // Atribui as mesas adicionais
-      for (const tableId of selectedTableIds) {
-        await employeesAdapter.toggleTable(employee.id, tableId)
-      }
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
       setName('')
       setPhone('')
       setRole('attendant')
-      setSelectedTableIds([])
       toast.success('Funcionario cadastrado.')
     },
     onError: () => toast.error('Erro ao cadastrar funcionario.'),
@@ -130,25 +119,6 @@ export default function AdminEmployeesPage() {
               </label>
             </div>
 
-            <div className="space-y-2">
-              <span className="text-sm font-medium">Mesas atribuidas</span>
-              <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
-                {tables.map((t) => (
-                  <label key={t.id} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedTableIds.includes(t.id)}
-                      onChange={() => toggleTableSelection(t.id)}
-                      className="rounded border-border"
-                    />
-                    <span className="text-sm">Mesa {t.number}</span>
-                  </label>
-                ))}
-              </div>
-              {selectedTableIds.length > 0 && (
-                <p className="text-xs text-accent">{selectedTableIds.length} mesa(s) selecionada(s)</p>
-              )}
-            </div>
 
             <Button type="submit" disabled={!name.trim() || !phone.trim() || createEmployeeMutation.isPending}>
               <Plus className="h-4 w-4" /> Cadastrar
