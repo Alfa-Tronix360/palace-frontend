@@ -180,28 +180,7 @@ export default function AdminEmployeesPage() {
                 {Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </label>
-            <div className="space-y-2">
-              <span className="text-sm font-medium">Mesas atribuidas</span>
-              <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
-                {tables.map((t) => {
-                  const assigned = editingEmployee.assignedTables?.some((at: any) => at.tableId === t.id)
-                  return (
-                    <label key={t.id} className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={!!assigned}
-                        onChange={() => {
-                          const updated = assigned
-                            ? editingEmployee.assignedTables.filter((at: any) => at.tableId !== t.id)
-                            : [...(editingEmployee.assignedTables || []), { tableId: t.id, tableNumber: t.number }]
-                          setEditingEmployee({ ...editingEmployee, assignedTables: updated })
-                          employeesAdapter.toggleTable(editingEmployee.id, t.id)
-                        }}
-                        className="rounded border-border" />
-                      <span className="text-sm">Mesa {t.number}</span>
-                    </label>
-                  )
-                })}
-              </div>
-            </div>
+
             <div className="flex gap-2 pt-2 border-t border-border">
               <button onClick={() => setEditingEmployee(null)}
                 className="flex-1 py-2.5 rounded-md text-sm border border-border hover:bg-secondary transition-colors">
