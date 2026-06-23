@@ -206,13 +206,8 @@ function VenueMapSection() {
     if (!resizing) return
     const area = areas.find((item) => item.id === resizing.id)
     if (!area) return
-
-    if (resizing.edge === 'right') {
-      updateArea(area.id, { width: Math.max(8, Math.min(92 - area.x, x - area.x)) })
-    }
-    if (resizing.edge === 'bottom') {
-      updateArea(area.id, { height: Math.max(8, Math.min(92 - area.y, y - area.y)) })
-    }
+    if (resizing.edge === 'right') updateArea(area.id, { width: Math.max(8, Math.min(92 - area.x, x - area.x)) })
+    if (resizing.edge === 'bottom') updateArea(area.id, { height: Math.max(8, Math.min(92 - area.y, y - area.y)) })
     if (resizing.edge === 'left') {
       const right = area.x + area.width
       const nextX = Math.min(right - 8, x)
@@ -230,8 +225,6 @@ function VenueMapSection() {
     setResizing(null)
   }
 
-
-
   return (
     <section className="space-y-4">
       <div>
@@ -241,34 +234,31 @@ function VenueMapSection() {
           Edite o mapa do Palace, estados das mesas, zonas VIP, imagens e detalhes — para montar o layout do evento.
         </p>
       </div>
-
       <div className="space-y-3">
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-danger" /> Ocupada</span>
-            <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-warning" /> Reservada</span>
-            <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-success" /> Vaga</span>
-            <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-muted" /> Manutencao</span>
-          </div>
-          <PalaceMap
-            areas={areas}
-            tables={tables}
-            selectedId={selected?.id}
-            selectedAreaId={selectedArea?.id}
-            moving={moving}
-            resizing={resizing}
-            onSelect={(table) => setSelectedId(table.id)}
-            onSelectArea={(area) => setSelectedAreaId(area.id)}
-            onStartMove={setMoving}
-            onStartResize={setResizing}
-            onMove={moveSelectedTo}
-            onResize={resizeAreaTo}
-            onStopMove={stopMapGesture}
-          />
-          <p className="text-xs text-muted-foreground">
-            Clique numa area ou mesa para editar. Duplo clique move com o mouse. Arraste as bordas da area selecionada para aumentar ou diminuir.
-          </p>
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-danger" /> Ocupada</span>
+          <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-warning" /> Reservada</span>
+          <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-success" /> Vaga</span>
+          <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-muted" /> Manutencao</span>
         </div>
+        <PalaceMap
+          areas={areas}
+          tables={tables}
+          selectedId={selected?.id}
+          selectedAreaId={selectedArea?.id}
+          moving={moving}
+          resizing={resizing}
+          onSelect={(table) => setSelectedId(table.id)}
+          onSelectArea={(area) => setSelectedAreaId(area.id)}
+          onStartMove={setMoving}
+          onStartResize={setResizing}
+          onMove={moveSelectedTo}
+          onResize={resizeAreaTo}
+          onStopMove={stopMapGesture}
+        />
+        <p className="text-xs text-muted-foreground">
+          Clique numa area ou mesa para editar. Duplo clique move com o mouse. Arraste as bordas da area selecionada para aumentar ou diminuir.
+        </p>
       </div>
     </section>
   )
@@ -441,9 +431,7 @@ function VenueAreasSection() {
               <textarea value={selected.description ?? ''} onChange={(e) => updateTable(selected.id, { description: e.target.value })} rows={3}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
             </label>
-            <Button type="button" variant="outline" onClick={() => setMoving({ type: 'table', id: selected.id })}>
-              <Move className="h-4 w-4" /> Mover mesa com mouse
-            </Button>
+
           </div>
         </section>
       )}
