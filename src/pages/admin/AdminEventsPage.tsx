@@ -251,7 +251,7 @@ function VenueMapSection() {
         </p>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="space-y-3">
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-danger" /> Ocupada</span>
@@ -278,247 +278,6 @@ function VenueMapSection() {
             Clique numa area ou mesa para editar. Duplo clique move com o mouse. Arraste as bordas da area selecionada para aumentar ou diminuir.
           </p>
         </div>
-
-        <aside className="space-y-5">
-          <section className="rounded-xl border border-border bg-surface p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary">
-                  <Map className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Areas do mapa</h3>
-                  <p className="text-xs text-muted-foreground">Formas geometricas editaveis</p>
-                </div>
-              </div>
-              <Button type="button" size="icon" onClick={addArea} title="Adicionar area">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {selectedArea && (
-              <div className="mt-5 space-y-4">
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium">Area selecionada</span>
-                  <select
-                    value={selectedArea.id}
-                    onChange={(event) => setSelectedAreaId(event.target.value)}
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                  >
-                    {areas.map((area) => (
-                      <option key={area.id} value={area.id}>{area.name}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium">Nome</span>
-                  <input
-                    value={selectedArea.name}
-                    onChange={(event) => updateArea(selectedArea.id, { name: event.target.value })}
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                  />
-                </label>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium">Forma</span>
-                    <select
-                      value={selectedArea.shape}
-                      onChange={(event) => updateArea(selectedArea.id, { shape: event.target.value as VenueAreaShape })}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                    >
-                      <option value="rectangle">Retangulo</option>
-                      <option value="circle">Circulo</option>
-                    </select>
-                  </label>
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium">Cor</span>
-                    <input
-                      type="color"
-                      value={selectedArea.color}
-                      onChange={(event) => updateArea(selectedArea.id, { color: event.target.value })}
-                      className="h-10 w-full rounded-md border border-input bg-background p-1"
-                    />
-                  </label>
-                </div>
-
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium">Preco do convite nesta area</span>
-                  <input
-                    type="number"
-                    min={0}
-                    step={1000}
-                    value={selectedArea.ticketPrice ?? 25000}
-                    onChange={(event) => updateArea(selectedArea.id, { ticketPrice: Number(event.target.value) })}
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                  />
-                </label>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium">Largura</span>
-                    <input
-                      type="number"
-                      min={8}
-                      max={80}
-                      value={selectedArea.width}
-                      onChange={(event) => updateArea(selectedArea.id, { width: Number(event.target.value) })}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                    />
-                  </label>
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium">Altura</span>
-                    <input
-                      type="number"
-                      min={8}
-                      max={80}
-                      value={selectedArea.height}
-                      onChange={(event) => updateArea(selectedArea.id, { height: Number(event.target.value) })}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                    />
-                  </label>
-                </div>
-
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium">Descricao</span>
-                  <textarea
-                    value={selectedArea.description ?? ''}
-                    onChange={(event) => updateArea(selectedArea.id, { description: event.target.value })}
-                    rows={2}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                  />
-                </label>
-
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={() => setMoving({ type: 'area', id: selectedArea.id })}>
-                    <Move className="h-4 w-4" />
-                    Mover area
-                  </Button>
-                  <Button type="button" className="flex-1" onClick={() => addTable(selectedArea.id)}>
-                    <Plus className="h-4 w-4" />
-                    Mesa
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => deleteArea(selectedArea.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <div className="rounded-lg border border-border bg-background p-3 space-y-3">
-                  <p className="text-sm font-medium">Unir com outra area</p>
-                  <select
-                    value={mergeAreaId}
-                    onChange={(event) => setMergeAreaId(event.target.value)}
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                  >
-                    <option value="">Escolher area</option>
-                    {areas
-                      .filter((area) => area.id !== selectedArea.id)
-                      .map((area) => (
-                        <option key={area.id} value={area.id}>{area.name}</option>
-                      ))}
-                  </select>
-                  <Button type="button" variant="outline" disabled={!mergeAreaId} onClick={handleMergeAreas} className="w-full">
-                    Unir areas
-                  </Button>
-                </div>
-              </div>
-            )}
-          </section>
-
-          {selected && (
-            <aside className="rounded-xl border border-border bg-surface p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary">
-                  <Armchair className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Mesa {selected.number}</h3>
-                  <p className="text-xs text-muted-foreground">Capacidade {selected.capacity} pessoas</p>
-                </div>
-              </div>
-
-              <div className="mt-5 space-y-4">
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium">Estado</span>
-                  <select
-                    value={selected.status}
-                    onChange={(event) => updateTable(selected.id, { status: event.target.value as TableStatus })}
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                  >
-                    {tableStatusOptions.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium">Area da mesa</span>
-                  <select
-                    value={selected.areaId ?? ''}
-                    onChange={(event) => updateTable(selected.id, { areaId: event.target.value || undefined })}
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                  >
-                    <option value="">Sem area</option>
-                    {areas.map((area) => (
-                      <option key={area.id} value={area.id}>{area.name}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium">Zona</span>
-                  <select
-                    value={selected.location}
-                    onChange={(event) => updateTable(selected.id, { location: event.target.value as Table['location'] })}
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                  >
-                    {tableLocationOptions.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="block space-y-2">
-                  <span className="flex items-center gap-2 text-sm font-medium"><Users className="h-4 w-4" /> Capacidade</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={30}
-                    value={selected.capacity}
-                    onChange={(event) => updateTable(selected.id, { capacity: Number(event.target.value) })}
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                  />
-                </label>
-
-                <label className="block space-y-2">
-                  <span className="flex items-center gap-2 text-sm font-medium"><Image className="h-4 w-4" /> Imagem / detalhe</span>
-                  <input
-                    value={selected.imageUrl ?? ''}
-                    onChange={(event) => updateTable(selected.id, { imageUrl: event.target.value })}
-                    placeholder="/images/mesa-vip.png"
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
-                  />
-                </label>
-
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium">Descricao</span>
-                  <textarea
-                    value={selected.description ?? ''}
-                    onChange={(event) => updateTable(selected.id, { description: event.target.value })}
-                    rows={3}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                  />
-                </label>
-
-                <Button type="button" variant="outline" onClick={() => setMoving({ type: 'table', id: selected.id })}>
-                  <Move className="h-4 w-4" />
-                  Mover mesa com mouse
-                </Button>
-              </div>
-            </aside>
-          )}
-        </aside>
       </div>
     </section>
   )
@@ -527,6 +286,181 @@ function VenueMapSection() {
 /* ──────────────────────────────────────────────────────────────────────────
  * Página Eventos (conteúdo original)
  * ────────────────────────────────────────────────────────────────────────── */
+function VenueAreasSection() {
+  const areas = useVenueStore((state) => state.areas)
+  const tables = useVenueStore((state) => state.tables)
+  const addArea = useVenueStore((state) => state.addArea)
+  const updateArea = useVenueStore((state) => state.updateArea)
+  const deleteArea = useVenueStore((state) => state.deleteArea)
+  const mergeAreas = useVenueStore((state) => state.mergeAreas)
+  const addTable = useVenueStore((state) => state.addTable)
+  const updateTable = useVenueStore((state) => state.updateTable)
+  const [selectedId, setSelectedId] = useState(tables[0]?.id)
+  const [selectedAreaId, setSelectedAreaId] = useState(areas[0]?.id)
+  const [moving, setMoving] = useState<MoveTarget | null>(null)
+  const [mergeAreaId, setMergeAreaId] = useState('')
+  const selected = tables.find((table) => table.id === selectedId) ?? tables[0]
+  const selectedArea = areas.find((area) => area.id === selectedAreaId) ?? areas[0]
+
+  return (
+    <div className="space-y-5 max-h-[700px] overflow-y-auto pr-1">
+      <section className="rounded-xl border border-border bg-surface p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <Map className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Areas do mapa</h3>
+              <p className="text-xs text-muted-foreground">Formas geometricas editaveis</p>
+            </div>
+          </div>
+          <Button type="button" size="icon" onClick={addArea} title="Adicionar area">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        {selectedArea && (
+          <div className="mt-5 space-y-4">
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Area selecionada</span>
+              <select value={selectedArea.id} onChange={(e) => setSelectedAreaId(e.target.value)}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                {areas.map((area) => <option key={area.id} value={area.id}>{area.name}</option>)}
+              </select>
+            </label>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Nome</span>
+              <input value={selectedArea.name} onChange={(e) => updateArea(selectedArea.id, { name: e.target.value })}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Forma</span>
+                <select value={selectedArea.shape} onChange={(e) => updateArea(selectedArea.id, { shape: e.target.value as VenueAreaShape })}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                  <option value="rectangle">Retangulo</option>
+                  <option value="circle">Circulo</option>
+                </select>
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Cor</span>
+                <input type="color" value={selectedArea.color} onChange={(e) => updateArea(selectedArea.id, { color: e.target.value })}
+                  className="h-10 w-full rounded-md border border-input bg-background p-1" />
+              </label>
+            </div>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Preco do convite nesta area</span>
+              <input type="number" min={0} step={1000} value={selectedArea.ticketPrice ?? 25000}
+                onChange={(e) => updateArea(selectedArea.id, { ticketPrice: Number(e.target.value) })}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Largura</span>
+                <input type="number" min={8} max={80} value={selectedArea.width}
+                  onChange={(e) => updateArea(selectedArea.id, { width: Number(e.target.value) })}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Altura</span>
+                <input type="number" min={8} max={80} value={selectedArea.height}
+                  onChange={(e) => updateArea(selectedArea.id, { height: Number(e.target.value) })}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+              </label>
+            </div>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Descricao</span>
+              <textarea value={selectedArea.description ?? ''} onChange={(e) => updateArea(selectedArea.id, { description: e.target.value })} rows={2}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
+            </label>
+            <div className="flex gap-2">
+              <Button type="button" className="flex-1" onClick={() => addTable(selectedArea.id)}>
+                <Plus className="h-4 w-4" /> Mesa
+              </Button>
+              <Button type="button" variant="outline" onClick={() => deleteArea(selectedArea.id)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3 space-y-3">
+              <p className="text-sm font-medium">Unir com outra area</p>
+              <select value={mergeAreaId} onChange={(e) => setMergeAreaId(e.target.value)}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                <option value="">Escolher area</option>
+                {areas.filter((area) => area.id !== selectedArea.id).map((area) => (
+                  <option key={area.id} value={area.id}>{area.name}</option>
+                ))}
+              </select>
+              <Button type="button" variant="outline" disabled={!mergeAreaId}
+                onClick={() => { mergeAreas(selectedArea.id, mergeAreaId); setMergeAreaId('') }} className="w-full">
+                Unir areas
+              </Button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {selected && (
+        <section className="rounded-xl border border-border bg-surface p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <Armchair className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Mesa {selected.number}</h3>
+              <p className="text-xs text-muted-foreground">Capacidade {selected.capacity} pessoas</p>
+            </div>
+          </div>
+          <div className="mt-5 space-y-4">
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Estado</span>
+              <select value={selected.status} onChange={(e) => updateTable(selected.id, { status: e.target.value as TableStatus })}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                {tableStatusOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Area da mesa</span>
+              <select value={selected.areaId ?? ''} onChange={(e) => updateTable(selected.id, { areaId: e.target.value || undefined })}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                <option value="">Sem area</option>
+                {areas.map((area) => <option key={area.id} value={area.id}>{area.name}</option>)}
+              </select>
+            </label>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Zona</span>
+              <select value={selected.location} onChange={(e) => updateTable(selected.id, { location: e.target.value as Table['location'] })}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                {tableLocationOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+            <label className="block space-y-2">
+              <span className="flex items-center gap-2 text-sm font-medium"><Users className="h-4 w-4" /> Capacidade</span>
+              <input type="number" min={1} max={30} value={selected.capacity}
+                onChange={(e) => updateTable(selected.id, { capacity: Number(e.target.value) })}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+            </label>
+            <label className="block space-y-2">
+              <span className="flex items-center gap-2 text-sm font-medium"><Image className="h-4 w-4" /> Imagem / detalhe</span>
+              <input value={selected.imageUrl ?? ''} onChange={(e) => updateTable(selected.id, { imageUrl: e.target.value })}
+                placeholder="/images/mesa-vip.png"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+            </label>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium">Descricao</span>
+              <textarea value={selected.description ?? ''} onChange={(e) => updateTable(selected.id, { description: e.target.value })} rows={3}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
+            </label>
+            <Button type="button" variant="outline" onClick={() => setMoving({ type: 'table', id: selected.id })}>
+              <Move className="h-4 w-4" /> Mover mesa com mouse
+            </Button>
+          </div>
+        </section>
+      )}
+    </div>
+  )
+}
+
+
 
 export default function AdminEventsPage() {
   const queryClient = useQueryClient()
