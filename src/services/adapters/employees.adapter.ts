@@ -8,11 +8,11 @@ function normalizeEmployee(item: any): Employee {
     phone: item.phone,
     role: item.role,
     tableId: item.table_id ? String(item.table_id) : undefined,
-    assignedTables: (item.assigned_tables || []).map((at: any) => ({
-      id: String(at.id),
-      tableId: String(at.table_id),
-      tableNumber: at.table_number,
-    })),
+   assignedTables: (item.assignedTables || item.assigned_tables || []).map((at: any) => ({
+  id: String(at.id),
+  tableId: String(at.tableId || at.table_id),
+  tableNumber: at.tableNumber || at.table_number || 0,
+})),
     active: item.active ?? true,
     createdAt: new Date(item.created_at),
   }
