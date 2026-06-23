@@ -68,4 +68,8 @@ export const employeesAdapter = {
     })
     return normalizeOrder(order)
   },
+
+  async delete(id: string): Promise<void> {
+    await http.delete(`/employees/${id}`)
+  },
 }

@@ -181,6 +181,16 @@ export default function AdminEmployeesPage() {
                 className="flex-1 py-2.5 rounded-md text-sm border border-border hover:bg-secondary transition-colors">
                 Fechar
               </button>
+              <button onClick={async () => {
+                if (!confirm(`Apagar "${editingEmployee.name}"?`)) return
+                await employeesAdapter.delete(editingEmployee.id)
+                queryClient.invalidateQueries({ queryKey: ['employees'] })
+                setEditingEmployee(null)
+                toast.success('Funcionario eliminado.')
+              }}
+                className="px-4 py-2.5 rounded-md text-sm border border-danger/30 hover:bg-danger/10 text-danger transition-colors">
+                Apagar
+              </button>
               <Button className="flex-1" onClick={async () => {
                 await employeesAdapter.assignTable(editingEmployee.id, editingEmployee.tableId)
                 queryClient.invalidateQueries({ queryKey: ['employees'] })
