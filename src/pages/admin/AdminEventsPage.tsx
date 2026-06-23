@@ -254,9 +254,9 @@ function VenueMapSection() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-success" /> Ocupada</span>
+            <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-danger" /> Ocupada</span>
             <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-warning" /> Reservada</span>
-            <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-danger" /> Vaga</span>
+            <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-success" /> Vaga</span>
             <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-muted" /> Manutencao</span>
           </div>
           <PalaceMap
