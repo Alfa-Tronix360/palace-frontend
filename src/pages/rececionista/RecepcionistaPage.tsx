@@ -7,6 +7,9 @@ import { reservationsAdapter } from '@/services/adapters/reservations.adapter'
 import { tablesAdapter } from '@/services/adapters/tables.adapter'
 import { http } from '@/services/api/http'
 import { toast } from 'sonner'
+import { useAuthStore } from '@/store/auth.store'
+import { useNavigate } from 'react-router-dom'
+
 
 export default function RecepcionistaPage() {
     const queryClient = useQueryClient()
@@ -19,7 +22,8 @@ export default function RecepcionistaPage() {
     const [guests, setGuests] = useState(2)
     const [tableId, setTableId] = useState('')
     const [notes, setNotes] = useState('')
-
+    const logout = useAuthStore(s => s.logout)
+    const navigate = useNavigate()
     const { data: reservations = [] } = useQuery({
         queryKey: ['reservations'],
         queryFn: () => reservationsAdapter.getAll(),
@@ -62,15 +66,25 @@ export default function RecepcionistaPage() {
     const todayReservations = reservations.filter(r => {
         const today = new Date()
         const rDate = new Date(r.date)
-        return rDate.toDateString() === today.toDateString()
+        return (
+            rDate.getFullYear() === today.getFullYear() &&
+            rDate.getMonth() === today.getMonth() &&
+            rDate.getDate() === today.getDate()
+        )
     })
 
     return (
         <div className="min-h-screen bg-background p-6 space-y-6">
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-                <p className="text-xs tracking-[0.25em] uppercase mb-1" style={{ color: '#B89A67' }}>Receção</p>
-                <h1 className="font-display text-3xl text-primary">Painel do Rececionista</h1>
-                <p className="text-muted-foreground text-sm mt-1">Registe reservas por telefone e acompanhe as reservas do dia.</p>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
+                <div>
+                    <p className="text-xs tracking-[0.25em] uppercase mb-1" style={{ color: '#B89A67' }}>Receção</p>
+                    <h1 className="font-display text-3xl text-primary">Painel do Rececionista</h1>
+                    <p className="text-muted-foreground text-sm mt-1">Registe reservas por telefone e acompanhe as reservas do dia.</p>
+                </div>
+                <button onClick={() => { logout(); navigate('/login') }}
+                    className="text-sm text-muted-foreground hover:text-foreground border border-border rounded-md px-3 py-2 transition-colors">
+                    Terminar sessão
+                </button>
             </motion.div>
 
             <div className="grid gap-6 xl:grid-cols-2">
