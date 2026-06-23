@@ -655,9 +655,12 @@ export default function AdminEventsPage() {
 
       <EventsTable />
 
+      {/* MAPA NO TOPO */}
       <VenueMapSection />
 
-      <section className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+      {/* AREAS DO MAPA + PUBLICAR FESTA lado a lado */}
+      <section className="grid gap-6 xl:grid-cols-2">
+        {/* PUBLICAR FESTA */}
         <form onSubmit={onSubmit} className="rounded-xl border border-border bg-surface p-5 space-y-4">
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-accent">Bilheteira</p>
@@ -666,13 +669,11 @@ export default function AdminEventsPage() {
               O mapa de convites sera criado com base nas mesas configuradas.
             </p>
           </div>
-
           <label className="block space-y-2">
             <span className="text-sm font-medium">Nome do evento</span>
             <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Noite Palace Sunset"
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
           </label>
-
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block space-y-2">
               <span className="text-sm font-medium">Data</span>
@@ -685,21 +686,17 @@ export default function AdminEventsPage() {
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
             </label>
           </div>
-
           <label className="block space-y-2">
             <span className="text-sm font-medium">Nome do palco</span>
             <input value={stageLabel} onChange={e => setStageLabel(e.target.value)}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
           </label>
-
           <label className="block space-y-2">
             <span className="text-sm font-medium">Preço base (Kz)</span>
             <input type="number" min="0" value={basePrice} onChange={e => setBasePrice(e.target.value)}
               placeholder="Ex: 15000"
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
           </label>
-
-
           <label className="block space-y-2">
             <span className="text-sm font-medium">Imagem do evento</span>
             <input type="file" accept="image/*"
@@ -712,20 +709,18 @@ export default function AdminEventsPage() {
               <img src={bannerPreview} alt="Preview" className="mt-2 h-32 w-full rounded-md object-cover" />
             )}
           </label>
-
           <label className="block space-y-2">
             <span className="text-sm font-medium">Descricao</span>
             <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
           </label>
-
-
           <Button type="submit" disabled={!title || !date || createEventMutation.isPending || uploadingBanner} className="w-full">
             <Ticket className="h-4 w-4" />
             {uploadingBanner ? 'A carregar imagem...' : createEventMutation.isPending ? 'A publicar...' : 'Publicar evento'}
           </Button>
         </form>
 
+        {/* EVENTOS PUBLICADOS + MESAS */}
         <div className="space-y-3">
           <h2 className="font-display text-2xl text-primary">Eventos publicados</h2>
           {publishedEvents.length ? (
@@ -747,8 +742,7 @@ export default function AdminEventsPage() {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <Button type="button" variant="outline"
-                          onClick={() => setEditingEvent(event)}>
+                        <Button type="button" variant="outline" onClick={() => setEditingEvent(event)}>
                           Editar
                         </Button>
                         <Button type="button" variant="outline"
@@ -757,11 +751,7 @@ export default function AdminEventsPage() {
                           {event.published ? 'Publicado' : 'Oculto'}
                         </Button>
                         <Button type="button" variant="outline"
-                          onClick={() => {
-                            if (confirm(`Apagar "${event.title}"?`)) {
-                              deleteEventMutation.mutate(event.id)
-                            }
-                          }}
+                          onClick={() => { if (confirm(`Apagar "${event.title}"?`)) deleteEventMutation.mutate(event.id) }}
                           className="text-danger border-danger/30 hover:bg-danger/10">
                           <Trash2 className="h-4 w-4" />
                         </Button>
