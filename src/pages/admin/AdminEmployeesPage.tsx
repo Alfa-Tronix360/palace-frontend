@@ -173,22 +173,11 @@ export default function AdminEmployeesPage() {
                       <p className="text-sm text-muted-foreground">{roleLabels[employee.role]} | {employee.phone}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {tables.map((t) => {
-                      const assigned = employee.assignedTables?.some((at) => at.tableId === t.id)
-                      return (
-                        <label key={t.id} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={!!assigned}
-                            onChange={() => toggleTableMutation.mutate({ employeeId: employee.id, tableId: t.id })}
-                            className="rounded border-border"
-                          />
-                          <span className="text-sm">Mesa {t.number}</span>
-                        </label>
-                      )
-                    })}
-                  </div>
+                  {employee.assignedTables && employee.assignedTables.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Mesas: {employee.assignedTables.map((at) => `Mesa ${at.tableNumber}`).join(', ')}
+                    </p>
+                  )}
                 </div>
               )) : (
                 <div className="p-5 text-sm text-muted-foreground">Ainda nao existem funcionarios cadastrados.</div>
