@@ -44,7 +44,7 @@ export default function LoginPage() {
       login(data.user, data.access_token)
       const role = data.user.role
 
-      // DEPOIS
+
 
       navigate(roleRedirect[role] ?? ROUTES.CLIENT.DASHBOARD)
     } catch (e: any) {
