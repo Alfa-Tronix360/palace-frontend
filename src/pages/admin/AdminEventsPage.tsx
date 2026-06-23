@@ -79,7 +79,7 @@ function PalaceMap({
   return (
     <div
       className={cn(
-        'relative min-h-[700px] overflow-hidden rounded-xl border border-border bg-[#1f1f1f]',
+        'relative min-h-[850px] overflow-hidden rounded-xl border border-border bg-[#1f1f1f]',
         (moving || resizing) && 'cursor-move ring-2 ring-primary/40'
       )}
       onMouseMove={handlePointer}
