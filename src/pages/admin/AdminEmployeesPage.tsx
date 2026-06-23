@@ -36,23 +36,31 @@ export default function AdminEmployeesPage() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [role, setRole] = useState<EmployeeRole>('attendant')
-  const [newTableId, setNewTableId] = useState('')
+  const [selectedTableIds, setSelectedTableIds] = useState<string[]>([])
 
-
+  function toggleTableSelection(id: string) {
+    setSelectedTableIds((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    )
+  }
 
   const createEmployeeMutation = useMutation({
     mutationFn: () => employeesAdapter.create({
       name: name.trim(),
       phone: phone.trim(),
       role,
-      table_id: newTableId ? Number(newTableId) : undefined,
+      table_id: selectedTableIds.length > 0 ? Number(selectedTableIds[0]) : undefined,
     }),
-    onSuccess: () => {
+    onSuccess: async (employee) => {
+      // Atribui as mesas adicionais
+      for (const tableId of selectedTableIds) {
+        await employeesAdapter.toggleTable(employee.id, tableId)
+      }
       queryClient.invalidateQueries({ queryKey: ['employees'] })
       setName('')
       setPhone('')
       setRole('attendant')
-      setNewTableId('')
+      setSelectedTableIds([])
       toast.success('Funcionario cadastrado.')
     },
     onError: () => toast.error('Erro ao cadastrar funcionario.'),
@@ -64,9 +72,6 @@ export default function AdminEmployeesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
     onError: () => toast.error('Erro ao atribuir mesa.'),
   })
-
-
-
 
   const topEmployees = useMemo(() => {
     return employeeOrders
@@ -98,8 +103,6 @@ export default function AdminEmployeesPage() {
     createEmployeeMutation.mutate()
   }
 
-
-
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
@@ -130,54 +133,64 @@ export default function AdminEmployeesPage() {
                   {Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </label>
-              <label className="block space-y-2">
-                <span className="text-sm font-medium">Mesa atribuida</span>
-                <select value={newTableId} onChange={(e) => setNewTableId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-                  <option value="">Sem mesa fixa</option>
-                  {tables.map((t) => <option key={t.id} value={t.id}>Mesa {t.number}</option>)}
-                </select>
-              </label>
             </div>
+
+            <div className="space-y-2">
+              <span className="text-sm font-medium">Mesas atribuidas</span>
+              <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                {tables.map((t) => (
+                  <label key={t.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedTableIds.includes(t.id)}
+                      onChange={() => toggleTableSelection(t.id)}
+                      className="rounded border-border"
+                    />
+                    <span className="text-sm">Mesa {t.number}</span>
+                  </label>
+                ))}
+              </div>
+              {selectedTableIds.length > 0 && (
+                <p className="text-xs text-accent">{selectedTableIds.length} mesa(s) selecionada(s)</p>
+              )}
+            </div>
+
             <Button type="submit" disabled={!name.trim() || !phone.trim() || createEmployeeMutation.isPending}>
               <Plus className="h-4 w-4" /> Cadastrar
             </Button>
           </form>
-
-
 
           <div className="rounded-xl border border-border/40 bg-surface">
             <div className="border-b border-border/40 p-5">
               <h2 className="font-semibold">Funcionarios cadastrados</h2>
             </div>
             <div className="divide-y divide-border/40">
-              {employees.length ? employees.map((employee) => {
-                return (
-                  <div key={employee.id} className="grid gap-3 p-4 md:grid-cols-[1fr_180px] md:items-center">
+              {employees.length ? employees.map((employee) => (
+                <div key={employee.id} className="p-4 space-y-2">
+                  <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">{employee.name}</p>
                       <p className="text-sm text-muted-foreground">{roleLabels[employee.role]} | {employee.phone}</p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {tables.map((t) => {
-                        const assigned = employee.assignedTables?.some((at) => at.tableId === t.id)
-                        return (
-                          <button
-                            key={t.id}
-                            type="button"
-                            onClick={() => toggleTableMutation.mutate({ employeeId: employee.id, tableId: t.id })}
-                            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${assigned
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-border bg-background text-muted-foreground hover:border-primary/50'
-                              }`}
-                          >
-                            Mesa {t.number}
-                          </button>
-                        )
-                      })}
-                    </div>
                   </div>
-                )
-              }) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {tables.map((t) => {
+                      const assigned = employee.assignedTables?.some((at) => at.tableId === t.id)
+                      return (
+                        <label key={t.id} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={!!assigned}
+                            onChange={() => toggleTableMutation.mutate({ employeeId: employee.id, tableId: t.id })}
+                            className="rounded border-border"
+                          />
+                          <span className="text-sm">Mesa {t.number}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+              )) : (
                 <div className="p-5 text-sm text-muted-foreground">Ainda nao existem funcionarios cadastrados.</div>
               )}
             </div>
