@@ -66,12 +66,6 @@ export default function AdminEmployeesPage() {
     onError: () => toast.error('Erro ao cadastrar funcionario.'),
   })
 
-  const toggleTableMutation = useMutation({
-    mutationFn: ({ employeeId, tableId }: { employeeId: string; tableId: string }) =>
-      employeesAdapter.toggleTable(employeeId, tableId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
-    onError: () => toast.error('Erro ao atribuir mesa.'),
-  })
 
   const topEmployees = useMemo(() => {
     return employeeOrders
