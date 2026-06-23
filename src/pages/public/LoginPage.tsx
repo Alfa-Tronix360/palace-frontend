@@ -20,6 +20,7 @@ export default function LoginPage() {
     chefe_sala: ROUTES.OPERACIONAL.DASHBOARD,
     chefe_cozinha: ROUTES.OPERACIONAL.COZINHA,
     bar: ROUTES.OPERACIONAL.BAR,
+    rececionista: ROUTES.RECECIONISTA.DASHBOARD,
     client: ROUTES.CLIENT.DASHBOARD,
   }
 

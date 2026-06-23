@@ -32,6 +32,11 @@ export const ROUTES = {
     BAR: '/operacional/bar',
     EQUIPA: '/operacional/equipa',
   },
+
+  RECECIONISTA: {
+  DASHBOARD: '/rececionista',
+  RESERVAS: '/rececionista/reservas',
+},
 } as const
 
 export const RESERVATION_STATUS = {

@@ -49,6 +49,8 @@ const AdminMenuPage = lazy(() => import('@/pages/admin/AdminMenuPage'))
 const AdminPaymentsPage = lazy(() => import('@/pages/admin/AdminPaymentsPage'))
 const AdminReportsPage = lazy(() => import('@/pages/admin/AdminReportsPage'))
 
+const RecepcionistaPage = lazy(() => import('@/pages/rececionista/RecepcionistaPage'))
+
 // Operational
 
 const OperacionalDashboardPage = lazy(() => import('@/pages/operacional/OperacionalDashboardPage'))
@@ -69,6 +71,10 @@ export const router = createBrowserRouter([
       { path: 'login', element: wrap(LoginPage) },
       { path: 'registo', element: wrap(RegisterPage) },
       { path: 'eventos', element: wrap(EventsPage) },
+      {
+        path: '/rececionista',
+        element: wrap(RecepcionistaPage),
+      },
     ],
   },
   {

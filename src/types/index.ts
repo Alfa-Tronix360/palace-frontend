@@ -1,6 +1,6 @@
 /* ─── Utilizadores ───────────────────────────────────────────────────────── */
 
-export type UserRole = 'admin' | 'client' | 'staff' | 'chefe_sala' | 'chefe_cozinha' | 'bar'
+export type UserRole = 'admin' | 'client' | 'staff' | 'chefe_sala' | 'chefe_cozinha' | 'bar' | 'rececionista'
 
 export interface User {
   id: string
