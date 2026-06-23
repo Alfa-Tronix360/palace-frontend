@@ -182,12 +182,24 @@ export default function AdminTablesPage() {
               {employees.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
             </select>
           </label>
-          <label className="block space-y-2">
+          <div className="block space-y-2 md:col-span-2">
             <span className="text-sm font-medium">Mesa</span>
-            <select value={orderTableId} onChange={(e) => setOrderTableId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-              {apiTables.map((t) => <option key={t.id} value={t.id}>Mesa {t.number}</option>)}
-            </select>
-          </label>
+            <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto border border-input rounded-md p-3 bg-background">
+              {apiTables.map((t) => (
+                <label key={t.id} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="orderTable"
+                    value={t.id}
+                    checked={orderTableId === t.id}
+                    onChange={() => setOrderTableId(t.id)}
+                    className="rounded border-border"
+                  />
+                  <span className="text-sm">Mesa {t.number}</span>
+                </label>
+              ))}
+            </div>
+          </div>
           <label className="block space-y-2">
             <span className="text-sm font-medium">Produto/servico</span>
             <input value={itemName} onChange={(e) => setItemName(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
