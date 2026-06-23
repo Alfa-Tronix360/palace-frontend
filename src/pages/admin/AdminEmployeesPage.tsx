@@ -36,7 +36,7 @@ export default function AdminEmployeesPage() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [role, setRole] = useState<EmployeeRole>('attendant')
-  const [tableId, setTableId] = useState('')
+  const [newTableId, setNewTableId] = useState('')
 
 
 
@@ -45,14 +45,14 @@ export default function AdminEmployeesPage() {
       name: name.trim(),
       phone: phone.trim(),
       role,
-      table_id: tableId ? Number(tableId) : undefined,
+      table_id: newTableId ? Number(newTableId) : undefined,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
       setName('')
       setPhone('')
       setRole('attendant')
-      setTableId('')
+      setNewTableId('')
       toast.success('Funcionario cadastrado.')
     },
     onError: () => toast.error('Erro ao cadastrar funcionario.'),
@@ -132,7 +132,7 @@ export default function AdminEmployeesPage() {
               </label>
               <label className="block space-y-2">
                 <span className="text-sm font-medium">Mesa atribuida</span>
-                <select value={tableId} onChange={(e) => setTableId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                <select value={newTableId} onChange={(e) => setNewTableId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
                   <option value="">Sem mesa fixa</option>
                   {tables.map((t) => <option key={t.id} value={t.id}>Mesa {t.number}</option>)}
                 </select>
