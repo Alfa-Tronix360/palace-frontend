@@ -18,10 +18,6 @@ const roleLabels: Record<EmployeeRole, string> = {
 export default function AdminEmployeesPage() {
   const queryClient = useQueryClient()
 
-  const { data: tables = [] } = useQuery({
-    queryKey: ['tables'],
-    queryFn: () => tablesAdapter.getAll(),
-  })
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
