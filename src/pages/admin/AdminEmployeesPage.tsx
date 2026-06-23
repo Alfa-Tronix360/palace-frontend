@@ -162,7 +162,7 @@ export default function AdminEmployeesPage() {
 
           <div className="rounded-xl border border-border/40 bg-surface">
             <div className="border-b border-border/40 p-5">
-              <h2 className="font-semibold">Funcionarios cadastrados</h2>
+              <h2 className="font-semibold">Lista dos Funcionarios cadastrados</h2>
             </div>
             <div className="divide-y divide-border/40">
               {employees.length ? employees.map((employee) => (
