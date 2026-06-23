@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { reservationsAdapter } from '@/services/adapters/reservations.adapter'
 import { tablesAdapter } from '@/services/adapters/tables.adapter'
 import { toast } from 'sonner'
-import { formatDate } from '@/lib/utils'
+
 
 export default function RececonistaPage() {
     const queryClient = useQueryClient()
