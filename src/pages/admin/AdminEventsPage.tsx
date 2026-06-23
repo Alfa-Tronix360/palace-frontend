@@ -616,7 +616,7 @@ export default function AdminEventsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['published-events'] }),
   })
 
-  // DEPOIS
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!title || !date) return
