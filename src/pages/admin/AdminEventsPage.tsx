@@ -187,17 +187,12 @@ function PalaceMap({
 function VenueMapSection() {
   const areas = useVenueStore((state) => state.areas)
   const tables = useVenueStore((state) => state.tables)
-  const addArea = useVenueStore((state) => state.addArea)
   const updateArea = useVenueStore((state) => state.updateArea)
-  const deleteArea = useVenueStore((state) => state.deleteArea)
-  const mergeAreas = useVenueStore((state) => state.mergeAreas)
-  const addTable = useVenueStore((state) => state.addTable)
   const updateTable = useVenueStore((state) => state.updateTable)
   const [selectedId, setSelectedId] = useState(tables[0]?.id)
   const [selectedAreaId, setSelectedAreaId] = useState(areas[0]?.id)
   const [moving, setMoving] = useState<MoveTarget | null>(null)
   const [resizing, setResizing] = useState<ResizeTarget | null>(null)
-  const [mergeAreaId, setMergeAreaId] = useState('')
   const selected = tables.find((table) => table.id === selectedId) ?? tables[0]
   const selectedArea = areas.find((area) => area.id === selectedAreaId) ?? areas[0]
 
@@ -235,11 +230,7 @@ function VenueMapSection() {
     setResizing(null)
   }
 
-  function handleMergeAreas() {
-    if (!selectedArea || !mergeAreaId) return
-    mergeAreas(selectedArea.id, mergeAreaId)
-    setMergeAreaId('')
-  }
+
 
   return (
     <section className="space-y-4">
@@ -460,8 +451,6 @@ function VenueAreasSection() {
   )
 }
 
-
-
 export default function AdminEventsPage() {
   const queryClient = useQueryClient()
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
@@ -594,6 +583,8 @@ export default function AdminEventsPage() {
 
       {/* AREAS DO MAPA + PUBLICAR FESTA lado a lado */}
       <section className="grid gap-6 xl:grid-cols-2">
+        {/* AREAS DO MAPA */}
+        <VenueAreasSection />
         {/* PUBLICAR FESTA */}
         <form onSubmit={onSubmit} className="rounded-xl border border-border bg-surface p-5 space-y-4">
           <div>
