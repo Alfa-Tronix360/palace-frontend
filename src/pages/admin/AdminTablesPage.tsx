@@ -136,9 +136,9 @@ export default function AdminTablesPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-4">
-        <StatCard label="Ocupadas" value={stats.occupied} className="text-success" />
+        <StatCard label="Ocupadas" value={stats.occupied} className="text-danger" />
         <StatCard label="Reservadas" value={stats.reserved} className="text-warning" />
-        <StatCard label="Vagas" value={stats.available} className="text-danger" />
+        <StatCard label="Vagas" value={stats.available} className="text-success" />
         <StatCard label="VIP" value={stats.vip} className="text-accent" />
       </div>
 
