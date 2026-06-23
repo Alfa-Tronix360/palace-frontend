@@ -5,7 +5,6 @@ import { toast } from 'sonner'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
-import { tablesAdapter } from '@/services/adapters/tables.adapter'
 import { employeesAdapter } from '@/services/adapters/employees.adapter'
 import type { EmployeeRole } from '@/types'
 
