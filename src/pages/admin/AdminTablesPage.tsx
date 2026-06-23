@@ -81,7 +81,21 @@ export default function AdminTablesPage() {
   function handleCreateOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!orderEmployeeId || !orderTableId || !itemName.trim() || quantity <= 0 || price <= 0) return
-    createOrderMutation.mutate()
+    const tableIds = orderTableId.split(',').filter(Boolean)
+    tableIds.forEach((tableId) => {
+      employeesAdapter.createOrder({
+        employeeId: orderEmployeeId,
+        tableId,
+        items: [{ name: itemName.trim(), quantity, price }],
+      }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['employee-orders'] })
+      })
+    })
+    setItemName('')
+    setQuantity(1)
+    setPrice(0)
+    setOrderTableId('')
+    toast.success('Pedido lancado nas mesas.')
   }
 
   const stats = useMemo(() => ({
@@ -183,16 +197,22 @@ export default function AdminTablesPage() {
             </select>
           </label>
           <div className="block space-y-2 md:col-span-2">
-            <span className="text-sm font-medium">Mesa</span>
+            <span className="text-sm font-medium">Mesas</span>
             <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto border border-input rounded-md p-3 bg-background">
               {apiTables.map((t) => (
                 <label key={t.id} className="flex items-center gap-2 cursor-pointer">
                   <input
-                    type="radio"
-                    name="orderTable"
+                    type="checkbox"
                     value={t.id}
-                    checked={orderTableId === t.id}
-                    onChange={() => setOrderTableId(t.id)}
+                    checked={orderTableId.split(',').includes(t.id)}
+                    onChange={(e) => {
+                      const ids = orderTableId ? orderTableId.split(',') : []
+                      if (e.target.checked) {
+                        setOrderTableId([...ids, t.id].join(','))
+                      } else {
+                        setOrderTableId(ids.filter((id) => id !== t.id).join(','))
+                      }
+                    }}
                     className="rounded border-border"
                   />
                   <span className="text-sm">Mesa {t.number}</span>
