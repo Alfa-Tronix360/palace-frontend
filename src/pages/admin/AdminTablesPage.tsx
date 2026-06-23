@@ -53,6 +53,7 @@ export default function AdminTablesPage() {
   const [itemName, setItemName] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [price, setPrice] = useState(0)
+  const [editingEmployee, setEditingEmployee] = useState<any | null>(null)
 
   const createOrderMutation = useMutation({
     mutationFn: () => employeesAdapter.createOrder({
@@ -68,6 +69,13 @@ export default function AdminTablesPage() {
       toast.success('Pedido lancado na mesa.')
     },
     onError: () => toast.error('Nao foi possivel lancar o pedido.'),
+  })
+
+  const toggleTableMutation = useMutation({
+    mutationFn: ({ employeeId, tableId }: { employeeId: string; tableId: string }) =>
+      employeesAdapter.toggleTable(employeeId, tableId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
+    onError: () => toast.error('Erro ao atribuir mesa.'),
   })
 
   function handleCreateOrder(event: FormEvent<HTMLFormElement>) {
@@ -199,6 +207,70 @@ export default function AdminTablesPage() {
           <Plus className="h-4 w-4" /> Lançar Pedido
         </Button>
       </form>
+
+      <div className="rounded-xl border border-border/40 bg-surface">
+        <div className="border-b border-border/40 p-5">
+          <h2 className="font-semibold">Funcionarios e Mesas Atribuidas</h2>
+        </div>
+        <div className="divide-y divide-border/40">
+          {employees.length ? employees.map((employee) => (
+            <div key={employee.id} className="p-4 flex items-center justify-between cursor-pointer hover:bg-secondary/30 transition-colors"
+              onClick={() => setEditingEmployee(employee)}>
+              <div>
+                <p className="font-medium">{employee.name}</p>
+                <p className="text-sm text-muted-foreground">{employee.phone}</p>
+                {employee.assignedTables && employee.assignedTables.length > 0 && (
+                  <p className="text-xs text-accent mt-0.5">
+                    {employee.assignedTables.length} mesa(s): {employee.assignedTables.map((at) => `Mesa ${at.tableNumber}`).join(', ')}
+                  </p>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground">Editar →</span>
+            </div>
+          )) : (
+            <div className="p-5 text-sm text-muted-foreground">Nenhum funcionario cadastrado.</div>
+          )}
+        </div>
+      </div>
+
+      {editingEmployee && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-background shadow-xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl text-primary">{editingEmployee.name}</h2>
+              <button onClick={() => setEditingEmployee(null)} className="text-muted-foreground hover:text-foreground text-xl">×</button>
+            </div>
+            <p className="text-sm text-muted-foreground">{editingEmployee.phone}</p>
+            <div className="space-y-2">
+              <span className="text-sm font-medium">Mesas atribuidas</span>
+              <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                {apiTables.map((t) => {
+                  const assigned = editingEmployee.assignedTables?.some((at: any) => at.tableId === t.id)
+                  return (
+                    <label key={t.id} className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={!!assigned}
+                        onChange={() => {
+                          const updated = assigned
+                            ? editingEmployee.assignedTables.filter((at: any) => at.tableId !== t.id)
+                            : [...(editingEmployee.assignedTables || []), { tableId: t.id, tableNumber: t.number }]
+                          setEditingEmployee({ ...editingEmployee, assignedTables: updated })
+                          toggleTableMutation.mutate({ employeeId: editingEmployee.id, tableId: t.id })
+                        }}
+                        className="rounded border-border" />
+                      <span className="text-sm">Mesa {t.number}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+            <button onClick={() => setEditingEmployee(null)}
+              className="w-full py-2.5 rounded-md text-sm border border-border hover:bg-secondary transition-colors">
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
