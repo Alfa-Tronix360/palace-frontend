@@ -21,45 +21,36 @@ function formatEventDate(date: Date) {
 function TicketModal({ event, onClose }: { event: PublishedEvent; onClose: () => void }) {
     const user = useAuthStore(s => s.user)
     const navigate = useNavigate()
-    const [selectedSeat, setSelectedSeat] = useState<string | null>(null)
 
     const { data: seats = [], isLoading } = useQuery({
         queryKey: ['event-seats', event.id],
         queryFn: () => ticketsAdapter.getEventSeats(event.id),
     })
 
-    const purchaseMutation = useMutation({
-        mutationFn: () => ticketsAdapter.purchase(event.id, selectedSeat!),
-        onSuccess: () => {
-            toast.success('Bilhete comprado com sucesso!')
-            onClose()
-        },
-        onError: () => toast.error('Erro ao comprar bilhete. Tente novamente.'),
-    })
+    const availableSeats = seats.filter((s: TicketSeat) => s.status === 'available')
+    const soldSeats = seats.filter((s: TicketSeat) => s.status === 'sold')
 
-    function handlePurchase() {
+    function handleBuy() {
         if (!user) {
+            sessionStorage.setItem('pending_event_id', event.id)
             navigate(ROUTES.LOGIN)
             return
         }
-        if (!selectedSeat) return
-        purchaseMutation.mutate()
+        navigate(`/eventos/${event.id}`)
+        onClose()
     }
 
-    const availableSeats = seats.filter((s: TicketSeat) => s.status === 'available')
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-sm overflow-y-auto">
             <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="w-full max-w-lg rounded-2xl border border-border bg-background shadow-xl overflow-hidden"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-3xl min-h-screen bg-background shadow-xl"
             >
-                {/* Header */}
                 {event.bannerUrl && (
-                    <img src={event.bannerUrl} alt={event.title} className="w-full h-48 object-cover" />
+                    <img src={event.bannerUrl} alt={event.title} className="w-full h-[50vh] object-cover" />
                 )}
-                <div className="p-5 space-y-4">
+                <div className="p-6 space-y-5">
                     <div className="flex items-start justify-between">
                         <div>
                             <p className="text-xs uppercase tracking-widest text-accent">{event.stageLabel}</p>
@@ -72,118 +63,88 @@ function TicketModal({ event, onClose }: { event: PublishedEvent; onClose: () =>
                                     <Clock className="w-3.5 h-3.5" />{event.time}
                                 </span>
                             </div>
+                            <p className="mt-2 text-sm text-muted-foreground">{event.description}</p>
                         </div>
                         <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
                             <X className="w-5 h-5 text-muted-foreground" />
                         </button>
                     </div>
 
-                    {/* Preços */}
-                    <div className="space-y-2">
-                        <p className="text-sm font-medium">Opções de entrada</p>
-                        <div className="grid grid-cols-2 gap-2">
-                            {event.priceIndividual > 0 && (
-                                <div className="rounded-lg border border-border bg-surface p-3">
-                                    <p className="text-xs text-muted-foreground">Individual</p>
-                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceIndividual)}</p>
-                                </div>
-                            )}
-                            {event.priceTable > 0 && (
-                                <div className="rounded-lg border border-border bg-surface p-3">
-                                    <p className="text-xs text-muted-foreground">Mesa s/ consumo</p>
-                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceTable)}</p>
-                                </div>
-                            )}
-                            {event.priceTableWithConsumption > 0 && (
-                                <div className="rounded-lg border border-border bg-surface p-3">
-                                    <p className="text-xs text-muted-foreground">Mesa c/ consumo</p>
-                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceTableWithConsumption)}</p>
-                                </div>
-                            )}
-                            {event.priceBox > 0 && (
-                                <div className="rounded-lg border border-border bg-surface p-3">
-                                    <p className="text-xs text-muted-foreground">Box s/ consumo</p>
-                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceBox)}</p>
-                                </div>
-                            )}
-                            {event.priceBoxWithConsumption > 0 && (
-                                <div className="rounded-lg border border-border bg-surface p-3">
-                                    <p className="text-xs text-muted-foreground">Box c/ consumo</p>
-                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceBoxWithConsumption)}</p>
-                                </div>
-                            )}
-                            {event.priceVipIndividual > 0 && (
-                                <div className="rounded-lg border border-border bg-surface p-3">
-                                    <p className="text-xs text-muted-foreground">VIP Individual</p>
-                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceVipIndividual)}</p>
-                                </div>
-                            )}
-                            {event.priceVipTable > 0 && (
-                                <div className="rounded-lg border border-border bg-surface p-3">
-                                    <p className="text-xs text-muted-foreground">VIP Mesa</p>
-                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceVipTable)}</p>
-                                </div>
-                            )}
-                            {event.priceVipBox > 0 && (
-                                <div className="rounded-lg border border-border bg-surface p-3">
-                                    <p className="text-xs text-muted-foreground">VIP Box</p>
-                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceVipBox)}</p>
-                                </div>
-                            )}
+                    {/* Disponibilidade de mesas */}
+                    <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+                        <p className="text-sm font-medium">Disponibilidade</p>
+                        <div className="flex gap-4 text-sm">
+                            <span className="flex items-center gap-2">
+                                <span className="h-3 w-3 rounded-full bg-success" />
+                                {availableSeats.length} mesas disponíveis
+                            </span>
+                            <span className="flex items-center gap-2">
+                                <span className="h-3 w-3 rounded-full bg-danger" />
+                                {soldSeats.length} mesas vendidas
+                            </span>
                         </div>
-                    </div>
-
-                    {/* Lugares */}
-                    <div>
-                        <p className="text-sm font-medium mb-2">
-                            Escolha o seu lugar <span className="text-muted-foreground">({availableSeats.length} disponíveis)</span>
-                        </p>
                         {isLoading ? (
-                            <p className="text-sm text-muted-foreground">A carregar lugares...</p>
-                        ) : availableSeats.length ? (
-                            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
-                                {availableSeats.map((seat: TicketSeat) => (
-                                    <button
-                                        key={seat.id}
-                                        onClick={() => setSelectedSeat(seat.id)}
-                                        className={cn(
-                                            'rounded-lg border p-3 text-left transition-colors',
-                                            selectedSeat === seat.id
-                                                ? 'border-primary bg-primary/10'
-                                                : 'border-border bg-surface hover:border-primary/50'
-                                        )}
-                                    >
-                                        <p className="text-sm font-medium">Mesa {seat.tableNumber}</p>
-                                        <p className="text-xs text-muted-foreground">{seat.capacity} lugares | {TABLE_LOCATION_LABELS[seat.location]}</p>
-                                        <p className="text-sm font-semibold mt-1" style={{ color: '#B89A67' }}>
-                                            {formatCurrency(seat.price)}
-                                        </p>
-                                    </button>
+                            <p className="text-sm text-muted-foreground">A carregar...</p>
+                        ) : (
+                            <div className="flex flex-wrap gap-2">
+                                {seats.sort((a: TicketSeat, b: TicketSeat) => a.tableNumber - b.tableNumber).map((seat: TicketSeat) => (
+                                    <span key={seat.id} className={cn(
+                                        'rounded-full px-2.5 py-1 text-xs font-medium border',
+                                        seat.status === 'available'
+                                            ? 'bg-success/15 text-success border-success/30'
+                                            : 'bg-danger/15 text-danger border-danger/30'
+                                    )}>
+                                        Mesa {seat.tableNumber}
+                                    </span>
                                 ))}
                             </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">Sem lugares disponíveis para este evento.</p>
                         )}
                     </div>
 
-                    {/* Botões */}
-                    <div className="flex gap-2 pt-2 border-t border-border">
-                        <button
-                            onClick={onClose}
-                            className="flex-1 py-2.5 rounded-md text-sm border border-border hover:bg-secondary transition-colors"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            onClick={handlePurchase}
-                            disabled={!selectedSeat || purchaseMutation.isPending}
-                            className="flex-1 py-2.5 rounded-md text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
-                            style={{ backgroundColor: '#D9D0B5', color: '#181818' }}
-                        >
-                            <Ticket className="w-4 h-4" />
-                            {purchaseMutation.isPending ? 'A comprar...' : user ? 'Comprar bilhete' : 'Entrar para comprar'}
-                        </button>
-                    </div>
+                    {/* Preços */}
+                    {[
+                        { label: 'Individual', price: event.priceIndividual },
+                        { label: 'Mesa s/ consumo', price: event.priceTable },
+                        { label: 'Mesa c/ consumo', price: event.priceTableWithConsumption },
+                        { label: 'Box s/ consumo', price: event.priceBox },
+                        { label: 'Box c/ consumo', price: event.priceBoxWithConsumption },
+                        { label: 'VIP Individual', price: event.priceVipIndividual },
+                        { label: 'VIP Mesa', price: event.priceVipTable },
+                        { label: 'VIP Box', price: event.priceVipBox },
+                    ].filter(o => o.price > 0).length > 0 && (
+                            <div className="space-y-2">
+                                <p className="text-sm font-medium">Tabela de preços</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[
+                                        { label: 'Individual', price: event.priceIndividual },
+                                        { label: 'Mesa s/ consumo', price: event.priceTable },
+                                        { label: 'Mesa c/ consumo', price: event.priceTableWithConsumption },
+                                        { label: 'Box s/ consumo', price: event.priceBox },
+                                        { label: 'Box c/ consumo', price: event.priceBoxWithConsumption },
+                                        { label: 'VIP Individual', price: event.priceVipIndividual },
+                                        { label: 'VIP Mesa', price: event.priceVipTable },
+                                        { label: 'VIP Box', price: event.priceVipBox },
+                                    ].filter(o => o.price > 0).map(option => (
+                                        <div key={option.label} className="rounded-lg border border-border bg-surface p-3">
+                                            <p className="text-xs text-muted-foreground">{option.label}</p>
+                                            <p className="text-sm font-semibold mt-0.5" style={{ color: '#B89A67' }}>
+                                                {formatCurrency(option.price)}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                    {/* Botão */}
+                    <button
+                        onClick={handleBuy}
+                        className="w-full py-3 rounded-md text-sm font-medium transition-all hover:opacity-90 flex items-center justify-center gap-2"
+                        style={{ backgroundColor: '#D9D0B5', color: '#181818' }}
+                    >
+                        <Ticket className="w-4 h-4" />
+                        {user ? 'Selecionar mesa e comprar' : 'Entrar para comprar'}
+                    </button>
                 </div>
             </motion.div>
         </div>
