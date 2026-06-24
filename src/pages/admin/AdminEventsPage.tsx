@@ -501,6 +501,14 @@ export default function AdminEventsPage() {
   const [bannerPreview, setBannerPreview] = useState<string>('')
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [basePrice, setBasePrice] = useState('')
+  const [priceIndividual, setPriceIndividual] = useState('')
+  const [priceTable, setPriceTable] = useState('')
+  const [priceTableWithConsumption, setPriceTableWithConsumption] = useState('')
+  const [priceBox, setPriceBox] = useState('')
+  const [priceBoxWithConsumption, setPriceBoxWithConsumption] = useState('')
+  const [priceVipIndividual, setPriceVipIndividual] = useState('')
+  const [priceVipTable, setPriceVipTable] = useState('')
+  const [priceVipBox, setPriceVipBox] = useState('')
 
   async function uploadBanner(file: File): Promise<string> {
     const formData = new FormData()
@@ -523,6 +531,14 @@ export default function AdminEventsPage() {
       description,
       banner_url: finalBannerUrl || undefined,
       base_price: Number(basePrice) || 0,
+      price_individual: Number(priceIndividual) || 0,
+      price_table: Number(priceTable) || 0,
+      price_table_with_consumption: Number(priceTableWithConsumption) || 0,
+      price_box: Number(priceBox) || 0,
+      price_box_with_consumption: Number(priceBoxWithConsumption) || 0,
+      price_vip_individual: Number(priceVipIndividual) || 0,
+      price_vip_table: Number(priceVipTable) || 0,
+      price_vip_box: Number(priceVipBox) || 0,
       published: false,
       table_ids: tables.map((t) => Number(t.id)),
     }),
@@ -637,6 +653,56 @@ export default function AdminEventsPage() {
           </label>
           <label className="block space-y-2">
             <span className="text-sm font-medium">Preço base (Kz)</span>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Individual (Kz)</span>
+                <input type="number" min="0" value={priceIndividual} onChange={e => setPriceIndividual(e.target.value)}
+                  placeholder="Ex: 5000"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Mesa s/ consumo (Kz)</span>
+                <input type="number" min="0" value={priceTable} onChange={e => setPriceTable(e.target.value)}
+                  placeholder="Ex: 15000"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Mesa c/ consumo (Kz)</span>
+                <input type="number" min="0" value={priceTableWithConsumption} onChange={e => setPriceTableWithConsumption(e.target.value)}
+                  placeholder="Ex: 25000"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Box s/ consumo (Kz)</span>
+                <input type="number" min="0" value={priceBox} onChange={e => setPriceBox(e.target.value)}
+                  placeholder="Ex: 30000"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Box c/ consumo (Kz)</span>
+                <input type="number" min="0" value={priceBoxWithConsumption} onChange={e => setPriceBoxWithConsumption(e.target.value)}
+                  placeholder="Ex: 50000"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">VIP Individual (Kz)</span>
+                <input type="number" min="0" value={priceVipIndividual} onChange={e => setPriceVipIndividual(e.target.value)}
+                  placeholder="Ex: 10000"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">VIP Mesa (Kz)</span>
+                <input type="number" min="0" value={priceVipTable} onChange={e => setPriceVipTable(e.target.value)}
+                  placeholder="Ex: 35000"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">VIP Box (Kz)</span>
+                <input type="number" min="0" value={priceVipBox} onChange={e => setPriceVipBox(e.target.value)}
+                  placeholder="Ex: 60000"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+              </label>
+            </div>
             <input type="number" min="0" value={basePrice} onChange={e => setBasePrice(e.target.value)}
               placeholder="Ex: 15000"
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
