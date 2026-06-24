@@ -298,7 +298,7 @@ function VenueAreasSection({
   const addTable = useVenueStore((state) => state.addTable)
   const updateTable = useVenueStore((state) => state.updateTable)
   const [mergeAreaId, setMergeAreaId] = useState('')
-  const selected = apiTables.find((table) => table.id === selectedTableId) ?? apiTables[0]
+  const selected = tables.find((table) => table.id === selectedTableId) ?? tables[0]
   const selectedArea = areas.find((area) => area.id === selectedAreaId) ?? areas[0]
 
   return (
@@ -544,7 +544,7 @@ export default function AdminEventsPage() {
       price_vip_table: Number(priceVipTable) || 0,
       price_vip_box: Number(priceVipBox) || 0,
       published: false,
-      table_ids: tables.map((t) => Number(t.id)).filter((id) => !isNaN(id)),
+      table_ids: apiTables.map((t) => Number(t.id)).filter((id) => !isNaN(id)),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['published-events'] })
