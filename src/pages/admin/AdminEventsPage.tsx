@@ -197,7 +197,10 @@ function VenueMapSection({
   setSelectedAreaId: (id: string) => void
 }) {
   const areas = useVenueStore((state) => state.areas)
-  const tables = useVenueStore((state) => state.tables)
+  const { data: tables = [], refetch: refetchTables } = useQuery({
+    queryKey: ['tables'],
+    queryFn: () => tablesAdapter.getAll(),
+  })
   const updateArea = useVenueStore((state) => state.updateArea)
   const updateTable = useVenueStore((state) => state.updateTable)
   const [moving, setMoving] = useState<MoveTarget | null>(null)
@@ -208,7 +211,10 @@ function VenueMapSection({
   function moveSelectedTo(x: number, y: number) {
     if (!moving) return
     if (moving.type === 'area') updateArea(moving.id, { x, y })
-    else updateTable(moving.id, { x, y })
+    else {
+      updateTable(moving.id, { x, y })
+      refetchTables()
+    }
   }
 
   function resizeAreaTo(x: number, y: number) {
