@@ -1,6 +1,7 @@
 import { type MouseEvent, type FormEvent, useState } from 'react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import { tablesAdapter } from '@/services/adapters/tables.adapter'
 import {
   Armchair, CalendarDays, Eye, Image, Map, Plus, Ticket, Trash2, Users,
 } from 'lucide-react'
@@ -196,12 +197,15 @@ function VenueMapSection({
   setSelectedAreaId: (id: string) => void
 }) {
   const areas = useVenueStore((state) => state.areas)
-  const tables = useVenueStore((state) => state.tables)
+  const { data: apiTables = [] } = useQuery({
+    queryKey: ['tables'],
+    queryFn: () => tablesAdapter.getAll(),
+  })
   const updateArea = useVenueStore((state) => state.updateArea)
   const updateTable = useVenueStore((state) => state.updateTable)
   const [moving, setMoving] = useState<MoveTarget | null>(null)
   const [resizing, setResizing] = useState<ResizeTarget | null>(null)
-  const selected = tables.find((t) => t.id === selectedTableId) ?? tables[0]
+  const selected = apiTables.find((t) => t.id === selectedTableId) ?? apiTables[0]
   const selectedArea = areas.find((a) => a.id === selectedAreaId) ?? areas[0]
 
   function moveSelectedTo(x: number, y: number) {
@@ -251,7 +255,7 @@ function VenueMapSection({
         </div>
         <PalaceMap
           areas={areas}
-          tables={tables}
+          tables={apiTables}
           selectedId={selected?.id}
           selectedAreaId={selectedArea?.id}
           moving={moving}
@@ -289,7 +293,10 @@ function VenueAreasSection({
   setSelectedAreaId?: (id: string) => void
 }) {
   const areas = useVenueStore((state) => state.areas)
-  const tables = useVenueStore((state) => state.tables)
+  const { data: apiTables = [] } = useQuery({
+    queryKey: ['tables'],
+    queryFn: () => tablesAdapter.getAll(),
+  })
   const addArea = useVenueStore((state) => state.addArea)
   const updateArea = useVenueStore((state) => state.updateArea)
   const deleteArea = useVenueStore((state) => state.deleteArea)
@@ -297,7 +304,7 @@ function VenueAreasSection({
   const addTable = useVenueStore((state) => state.addTable)
   const updateTable = useVenueStore((state) => state.updateTable)
   const [mergeAreaId, setMergeAreaId] = useState('')
-  const selected = tables.find((table) => table.id === selectedTableId) ?? tables[0]
+  const selected = apiTables.find((table) => table.id === selectedTableId) ?? apiTables[0]
   const selectedArea = areas.find((area) => area.id === selectedAreaId) ?? areas[0]
 
   return (
@@ -459,7 +466,10 @@ function VenueAreasSection({
 
 export default function AdminEventsPage() {
   const queryClient = useQueryClient()
-  const tables = useVenueStore((state) => state.tables)
+  const { data: apiTables = [] } = useQuery({
+    queryKey: ['tables'],
+    queryFn: () => tablesAdapter.getAll(),
+  })
   const [selectedTableId, setSelectedTableId] = useState<string | undefined>(undefined)
   const [selectedAreaId, setSelectedAreaId] = useState<string | undefined>(undefined)
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
@@ -540,7 +550,7 @@ export default function AdminEventsPage() {
       price_vip_table: Number(priceVipTable) || 0,
       price_vip_box: Number(priceVipBox) || 0,
       published: false,
-      table_ids: tables.map((t) => Number(t.id)).filter((id) => !isNaN(id)),
+      table_ids: apiTables.map((t) => Number(t.id)).filter((id) => !isNaN(id)),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['published-events'] })
