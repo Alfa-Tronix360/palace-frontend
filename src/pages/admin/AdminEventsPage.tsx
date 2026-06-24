@@ -459,6 +459,7 @@ function VenueAreasSection({
 
 export default function AdminEventsPage() {
   const queryClient = useQueryClient()
+  const tables = useVenueStore((state) => state.tables)
   const [selectedTableId, setSelectedTableId] = useState<string | undefined>(undefined)
   const [selectedAreaId, setSelectedAreaId] = useState<string | undefined>(undefined)
   const [editingEvent, setEditingEvent] = useState<any | null>(null)
@@ -523,6 +524,7 @@ export default function AdminEventsPage() {
       banner_url: finalBannerUrl || undefined,
       base_price: Number(basePrice) || 0,
       published: false,
+      table_ids: tables.map((t) => Number(t.id)),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['published-events'] })
