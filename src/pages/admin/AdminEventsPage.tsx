@@ -540,7 +540,7 @@ export default function AdminEventsPage() {
       price_vip_table: Number(priceVipTable) || 0,
       price_vip_box: Number(priceVipBox) || 0,
       published: false,
-      table_ids: tables.map((t) => Number(t.id)),
+      table_ids: tables.map((t) => Number(t.id)).filter((id) => !isNaN(id)),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['published-events'] })
