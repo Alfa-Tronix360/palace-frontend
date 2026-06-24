@@ -6,7 +6,6 @@ import { Calendar, Clock, Ticket, ArrowLeft } from 'lucide-react'
 import { publishedEventsAdapter } from '@/services/adapters/published_events.adapter'
 import { ticketsAdapter } from '@/services/adapters/tickets.adapter'
 import { formatCurrency, cn } from '@/lib/utils'
-import { useAuthStore } from '@/store/auth.store'
 import { toast } from 'sonner'
 import type { TicketSeat } from '@/types'
 
@@ -17,7 +16,6 @@ function formatEventDate(date: Date) {
 export default function EventDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
-    const user = useAuthStore(s => s.user)
 
     const [selectedSeat, setSelectedSeat] = useState<TicketSeat | null>(null)
     const [selectedType, setSelectedType] = useState<string | null>(null)
