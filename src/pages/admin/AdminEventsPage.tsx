@@ -197,15 +197,12 @@ function VenueMapSection({
   setSelectedAreaId: (id: string) => void
 }) {
   const areas = useVenueStore((state) => state.areas)
-  const { data: apiTables = [] } = useQuery({
-    queryKey: ['tables'],
-    queryFn: () => tablesAdapter.getAll(),
-  })
+  const tables = useVenueStore((state) => state.tables)
   const updateArea = useVenueStore((state) => state.updateArea)
   const updateTable = useVenueStore((state) => state.updateTable)
   const [moving, setMoving] = useState<MoveTarget | null>(null)
   const [resizing, setResizing] = useState<ResizeTarget | null>(null)
-  const selected = apiTables.find((t) => t.id === selectedTableId) ?? apiTables[0]
+  const selected = tables.find((t) => t.id === selectedTableId) ?? tables[0]
   const selectedArea = areas.find((a) => a.id === selectedAreaId) ?? areas[0]
 
   function moveSelectedTo(x: number, y: number) {
@@ -255,7 +252,7 @@ function VenueMapSection({
         </div>
         <PalaceMap
           areas={areas}
-          tables={apiTables}
+          tables={tables}
           selectedId={selected?.id}
           selectedAreaId={selectedArea?.id}
           moving={moving}
@@ -293,10 +290,7 @@ function VenueAreasSection({
   setSelectedAreaId?: (id: string) => void
 }) {
   const areas = useVenueStore((state) => state.areas)
-  const { data: apiTables = [] } = useQuery({
-    queryKey: ['tables'],
-    queryFn: () => tablesAdapter.getAll(),
-  })
+  const tables = useVenueStore((state) => state.tables)
   const addArea = useVenueStore((state) => state.addArea)
   const updateArea = useVenueStore((state) => state.updateArea)
   const deleteArea = useVenueStore((state) => state.deleteArea)
@@ -550,7 +544,7 @@ export default function AdminEventsPage() {
       price_vip_table: Number(priceVipTable) || 0,
       price_vip_box: Number(priceVipBox) || 0,
       published: false,
-      table_ids: apiTables.map((t) => Number(t.id)).filter((id) => !isNaN(id)),
+      table_ids: tables.map((t) => Number(t.id)).filter((id) => !isNaN(id)),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['published-events'] })
