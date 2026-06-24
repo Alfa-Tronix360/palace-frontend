@@ -73,11 +73,18 @@ export interface PublishedEvent {
   stageLabel: string
   bannerUrl?: string
   basePrice: number
+  priceIndividual: number
+  priceTable: number
+  priceTableWithConsumption: number
+  priceBox: number
+  priceBoxWithConsumption: number
+  priceVipIndividual: number
+  priceVipTable: number
+  priceVipBox: number
   published: boolean
   seats: TicketSeat[]
   createdAt: Date
 }
-
 export interface DigitalTicket {
   id: string
   eventId: string

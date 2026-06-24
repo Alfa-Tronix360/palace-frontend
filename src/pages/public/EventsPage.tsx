@@ -78,6 +78,61 @@ function TicketModal({ event, onClose }: { event: PublishedEvent; onClose: () =>
                         </button>
                     </div>
 
+                    {/* Preços */}
+                    <div className="space-y-2">
+                        <p className="text-sm font-medium">Opções de entrada</p>
+                        <div className="grid grid-cols-2 gap-2">
+                            {event.priceIndividual > 0 && (
+                                <div className="rounded-lg border border-border bg-surface p-3">
+                                    <p className="text-xs text-muted-foreground">Individual</p>
+                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceIndividual)}</p>
+                                </div>
+                            )}
+                            {event.priceTable > 0 && (
+                                <div className="rounded-lg border border-border bg-surface p-3">
+                                    <p className="text-xs text-muted-foreground">Mesa s/ consumo</p>
+                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceTable)}</p>
+                                </div>
+                            )}
+                            {event.priceTableWithConsumption > 0 && (
+                                <div className="rounded-lg border border-border bg-surface p-3">
+                                    <p className="text-xs text-muted-foreground">Mesa c/ consumo</p>
+                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceTableWithConsumption)}</p>
+                                </div>
+                            )}
+                            {event.priceBox > 0 && (
+                                <div className="rounded-lg border border-border bg-surface p-3">
+                                    <p className="text-xs text-muted-foreground">Box s/ consumo</p>
+                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceBox)}</p>
+                                </div>
+                            )}
+                            {event.priceBoxWithConsumption > 0 && (
+                                <div className="rounded-lg border border-border bg-surface p-3">
+                                    <p className="text-xs text-muted-foreground">Box c/ consumo</p>
+                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceBoxWithConsumption)}</p>
+                                </div>
+                            )}
+                            {event.priceVipIndividual > 0 && (
+                                <div className="rounded-lg border border-border bg-surface p-3">
+                                    <p className="text-xs text-muted-foreground">VIP Individual</p>
+                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceVipIndividual)}</p>
+                                </div>
+                            )}
+                            {event.priceVipTable > 0 && (
+                                <div className="rounded-lg border border-border bg-surface p-3">
+                                    <p className="text-xs text-muted-foreground">VIP Mesa</p>
+                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceVipTable)}</p>
+                                </div>
+                            )}
+                            {event.priceVipBox > 0 && (
+                                <div className="rounded-lg border border-border bg-surface p-3">
+                                    <p className="text-xs text-muted-foreground">VIP Box</p>
+                                    <p className="text-sm font-semibold" style={{ color: '#B89A67' }}>{formatCurrency(event.priceVipBox)}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Lugares */}
                     <div>
                         <p className="text-sm font-medium mb-2">
