@@ -317,20 +317,28 @@ export const useVenueStore = create<VenueState>()(
           ),
         })),
 
-      createPublishedEvent: (data) =>
-        set((state) => ({
-          publishedEvents: [
-            {
-              ...data,
-              id: `pe-${Date.now()}`,
-              basePrice: 0,
-              published: true,
-              seats: buildSeats(state.tables, state.areas),
-              createdAt: new Date(),
-            },
-            ...state.publishedEvents,
-          ],
-        })),
+    createPublishedEvent: (data) =>
+  set((state) => ({
+    publishedEvents: [
+      {
+        ...data,
+        id: `pe-${Date.now()}`,
+        basePrice: 0,
+        priceIndividual: 0,
+        priceTable: 0,
+        priceTableWithConsumption: 0,
+        priceBox: 0,
+        priceBoxWithConsumption: 0,
+        priceVipIndividual: 0,
+        priceVipTable: 0,
+        priceVipBox: 0,
+        published: true,
+        seats: buildSeats(state.tables, state.areas),
+        createdAt: new Date(),
+      },
+      ...state.publishedEvents,
+    ],
+  })),
 
       toggleEventPublished: (id) =>
         set((state) => ({
