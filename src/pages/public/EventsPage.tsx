@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Calendar, Clock, Ticket, X } from 'lucide-react'
 import { publishedEventsAdapter } from '@/services/adapters/published_events.adapter'
@@ -9,9 +9,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/lib/constants'
 import type { PublishedEvent, TicketSeat } from '@/types'
-import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { TABLE_LOCATION_LABELS } from '@/lib/constants'
 
 function formatEventDate(date: Date) {
     return date.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
