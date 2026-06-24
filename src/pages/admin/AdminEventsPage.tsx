@@ -1,6 +1,7 @@
 import { type MouseEvent, type FormEvent, useState } from 'react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import { ticketsAdapter } from '@/services/adapters/tickets.adapter'
 import { tablesAdapter } from '@/services/adapters/tables.adapter'
 import {
   Armchair, CalendarDays, Eye, Image, Map, Plus, Ticket, Trash2, Users,
@@ -467,6 +468,64 @@ function VenueAreasSection({
   )
 }
 
+function EventSeatMap({ eventId }: { eventId: string }) {
+  const queryClient = useQueryClient()
+  const { data: seats = [] } = useQuery({
+    queryKey: ['event-seats', eventId],
+    queryFn: () => ticketsAdapter.getEventSeats(eventId),
+    enabled: !!eventId,
+  })
+  const [moving, setMoving] = useState<string | null>(null)
+
+  function handleMove(e: React.MouseEvent<HTMLDivElement>) {
+    if (!moving) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = Math.min(88, Math.max(8, ((e.clientX - rect.left) / rect.width) * 100))
+    const y = Math.min(88, Math.max(8, ((e.clientY - rect.top) / rect.height) * 100))
+    queryClient.setQueryData(['event-seats', eventId], (old: any[]) =>
+      old?.map((s) => s.id === moving ? { ...s, x, y } : s) ?? []
+    )
+  }
+
+  function handleStop(seatId: string, x: number, y: number) {
+    setMoving(null)
+    http.patch(`/published-events/${eventId}/seats/${seatId}`, { x, y }).catch(() => { })
+  }
+
+  return (
+    <div
+      className="relative h-64 rounded-xl border border-border bg-[#1f1f1f] overflow-hidden cursor-move"
+      onMouseMove={handleMove}
+      onMouseUp={(e) => {
+        if (!moving) return
+        const rect = e.currentTarget.getBoundingClientRect()
+        const x = Math.min(88, Math.max(8, ((e.clientX - rect.left) / rect.width) * 100))
+        const y = Math.min(88, Math.max(8, ((e.clientY - rect.top) / rect.height) * 100))
+        handleStop(moving, x, y)
+      }}
+      onMouseLeave={() => setMoving(null)}
+    >
+      <div className="absolute inset-x-8 top-2 h-8 rounded-b-2xl border border-accent/50 bg-accent/15 text-center">
+        <p className="pt-1.5 text-xs uppercase tracking-widest text-accent">Palco</p>
+      </div>
+      {seats.map((seat: any) => (
+        <button
+          key={seat.id}
+          type="button"
+          onMouseDown={() => setMoving(seat.id)}
+          className={cn(
+            'absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 text-xs font-bold cursor-grab active:cursor-grabbing',
+            seat.status === 'available' ? 'bg-success text-white border-success' : 'bg-danger text-white border-danger'
+          )}
+          style={{ left: `${seat.x ?? 20}%`, top: `${seat.y ?? 40}%` }}
+        >
+          {seat.tableNumber}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export default function AdminEventsPage() {
   const queryClient = useQueryClient()
   const { data: apiTables = [] } = useQuery({
@@ -801,7 +860,7 @@ export default function AdminEventsPage() {
 
       {editingEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-2xl border border-border bg-background shadow-xl p-6 space-y-4">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-background shadow-xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl text-primary">Editar Evento</h2>
               <button onClick={() => setEditingEvent(null)} className="text-muted-foreground hover:text-foreground text-xl">×</button>
@@ -838,6 +897,11 @@ export default function AdminEventsPage() {
               <textarea value={editingEvent.description || ''} onChange={e => setEditingEvent({ ...editingEvent, description: e.target.value })} rows={3}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
             </label>
+            <div className="space-y-2">
+              <span className="text-sm font-medium">Mapa do evento</span>
+              <p className="text-xs text-muted-foreground">Arrasta as mesas para reposicioná-las.</p>
+              <EventSeatMap eventId={String(editingEvent.id)} />
+            </div>
             <div className="flex gap-2 pt-2 border-t border-border">
               <button onClick={() => setEditingEvent(null)}
                 className="flex-1 py-2.5 rounded-md text-sm border border-border hover:bg-secondary transition-colors">
@@ -860,6 +924,7 @@ export default function AdminEventsPage() {
           </div>
         </div>
       )}
+
     </div>
   )
 }
