@@ -470,6 +470,7 @@ function VenueAreasSection({
 
 function EventSeatMap({ eventId }: { eventId: string }) {
   const queryClient = useQueryClient()
+  const areas = useVenueStore((state) => state.areas)
   const { data: seats = [] } = useQuery({
     queryKey: ['event-seats', eventId],
     queryFn: () => ticketsAdapter.getEventSeats(eventId),
@@ -508,6 +509,22 @@ function EventSeatMap({ eventId }: { eventId: string }) {
       <div className="absolute inset-x-8 top-2 h-8 rounded-b-2xl border border-accent/50 bg-accent/15 text-center">
         <p className="pt-1.5 text-xs uppercase tracking-widest text-accent">Palco</p>
       </div>
+      {areas.map((area) => (
+        <div
+          key={area.id}
+          className="absolute border border-dashed rounded-xl pointer-events-none"
+          style={{
+            left: `${area.x}%`,
+            top: `${area.y}%`,
+            width: `${area.width}%`,
+            height: `${area.height}%`,
+            borderColor: `${area.color}99`,
+            backgroundColor: `${area.color}18`,
+          }}
+        >
+          <span className="block text-[10px] font-medium p-1" style={{ color: area.color }}>{area.name}</span>
+        </div>
+      ))}
       {seats.map((seat: any) => (
         <button
           key={seat.id}
