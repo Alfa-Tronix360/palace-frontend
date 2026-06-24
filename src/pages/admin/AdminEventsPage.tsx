@@ -197,12 +197,12 @@ function VenueMapSection({
   setSelectedAreaId: (id: string) => void
 }) {
   const areas = useVenueStore((state) => state.areas)
-  const { data: tables = [], refetch: refetchTables } = useQuery({
+  const { data: tables = [] } = useQuery({
     queryKey: ['tables'],
     queryFn: () => tablesAdapter.getAll(),
   })
   const updateArea = useVenueStore((state) => state.updateArea)
-  const updateTable = useVenueStore((state) => state.updateTable)
+  const queryClient = useQueryClient()
   const [moving, setMoving] = useState<MoveTarget | null>(null)
   const [resizing, setResizing] = useState<ResizeTarget | null>(null)
   const selected = tables.find((t) => t.id === selectedTableId) ?? tables[0]
@@ -210,10 +210,13 @@ function VenueMapSection({
 
   function moveSelectedTo(x: number, y: number) {
     if (!moving) return
-    if (moving.type === 'area') updateArea(moving.id, { x, y })
-    else {
-      updateTable(moving.id, { x, y })
-      refetchTables()
+    if (moving.type === 'area') {
+      updateArea(moving.id, { x, y })
+    } else {
+      queryClient.setQueryData(['tables'], (old: any[]) =>
+        old?.map((t) => t.id === moving.id ? { ...t, x, y } : t) ?? []
+      )
+      http.patch(`/venue/tables/${moving.id}`, { x, y }).catch(() => { })
     }
   }
 
