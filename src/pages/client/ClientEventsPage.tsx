@@ -310,8 +310,8 @@ function TicketSales() {
                   createdAt: new Date(selectedEvent.created_at),
                   seats: (selectedEvent.seats ?? []).map((s: any) => ({
                     id: String(s.id),
-                    tableId: String(s.table_id),
-                    tableNumber: s.table_number,
+                    tableId: String(s.table_id ?? s.tableId),
+                    tableNumber: s.table_number ?? s.tableNumber,
                     x: s.x ?? 20,
                     y: s.y ?? 40,
                     capacity: s.capacity,
