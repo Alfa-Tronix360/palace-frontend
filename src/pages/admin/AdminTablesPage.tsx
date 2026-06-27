@@ -1,5 +1,5 @@
 import { FormEvent, useMemo, useState } from 'react'
-import { ClipboardList, Plus, Trash2 } from 'lucide-react'
+import { ClipboardList, Trash2 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { useVenueStore } from '@/store/venue.store'
@@ -55,21 +55,7 @@ export default function AdminTablesPage() {
   const [price, setPrice] = useState(0)
   const [editingEmployee, setEditingEmployee] = useState<any | null>(null)
 
-  const createOrderMutation = useMutation({
-    mutationFn: () => employeesAdapter.createOrder({
-      employeeId: orderEmployeeId,
-      tableId: orderTableId,
-      items: [{ name: itemName.trim(), quantity, price }],
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employee-orders'] })
-      setItemName('')
-      setQuantity(1)
-      setPrice(0)
-      toast.success('Pedido lancado na mesa.')
-    },
-    onError: () => toast.error('Nao foi possivel lancar o pedido.'),
-  })
+
 
   const toggleTableMutation = useMutation({
     mutationFn: ({ employeeId, tableId }: { employeeId: string; tableId: string }) =>
@@ -78,25 +64,7 @@ export default function AdminTablesPage() {
     onError: () => toast.error('Erro ao atribuir mesa.'),
   })
 
-  function handleCreateOrder(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!orderEmployeeId || !orderTableId || !itemName.trim() || quantity <= 0 || price <= 0) return
-    const tableIds = orderTableId.split(',').filter(Boolean)
-    tableIds.forEach((tableId) => {
-      employeesAdapter.createOrder({
-        employeeId: orderEmployeeId,
-        tableId,
-        items: [{ name: itemName.trim(), quantity, price }],
-      }).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['employee-orders'] })
-      })
-    })
-    setItemName('')
-    setQuantity(1)
-    setPrice(0)
-    setOrderTableId('')
-    toast.success('Pedido lancado nas mesas.')
-  }
+
 
   const stats = useMemo(() => ({
     occupied: tables.filter((t) => t.status === 'occupied').length,
@@ -179,7 +147,7 @@ export default function AdminTablesPage() {
         </table>
       </div>
 
-      <form onSubmit={handleCreateOrder} className="rounded-xl border border-border/40 bg-surface p-5 space-y-4">
+      <div className="rounded-xl border border-border/40 bg-surface p-5 space-y-4">
         <div className="flex items-center gap-2">
           <ClipboardList className="h-5 w-5 text-primary" />
           <h2 className="font-semibold">Administrar Mesas</h2>
@@ -188,9 +156,8 @@ export default function AdminTablesPage() {
           <label className="block space-y-2">
             <span className="text-sm font-medium">Funcionario</span>
             <select value={orderEmployeeId} onChange={(e) => {
-              const emp = employees.find((item) => item.id === e.target.value)
               setOrderEmployeeId(e.target.value)
-              setOrderTableId(emp?.tableId || apiTables[0]?.id || '')
+              setOrderTableId('')
             }} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
               <option value="">Selecione</option>
               {employees.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
@@ -204,9 +171,9 @@ export default function AdminTablesPage() {
                   <input
                     type="checkbox"
                     value={t.id}
-                    checked={orderTableId.split(',').includes(t.id)}
+                    checked={orderTableId.split(',').filter(Boolean).includes(t.id)}
                     onChange={(e) => {
-                      const ids = orderTableId ? orderTableId.split(',') : []
+                      const ids = orderTableId ? orderTableId.split(',').filter(Boolean) : []
                       if (e.target.checked) {
                         setOrderTableId([...ids, t.id].join(','))
                       } else {
@@ -220,25 +187,22 @@ export default function AdminTablesPage() {
               ))}
             </div>
           </div>
-          <label className="block space-y-2">
-            <span className="text-sm font-medium">Produto/servico</span>
-            <input value={itemName} onChange={(e) => setItemName(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Qtd.</span>
-              <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-            </label>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Preco</span>
-              <input type="number" min={0} value={price} onChange={(e) => setPrice(Number(e.target.value))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-            </label>
-          </div>
         </div>
-        <Button type="submit" disabled={!orderEmployeeId || !orderTableId || !itemName.trim() || price <= 0 || createOrderMutation.isPending}>
-          <Plus className="h-4 w-4" /> Lançar Pedido
+        <Button
+          type="button"
+          disabled={!orderEmployeeId || !orderTableId || toggleTableMutation.isPending}
+          onClick={() => {
+            const ids = orderTableId.split(',').filter(Boolean)
+            ids.forEach((tableId) => {
+              toggleTableMutation.mutate({ employeeId: orderEmployeeId, tableId })
+            })
+            toast.success('Mesas atribuidas com sucesso!')
+            setOrderTableId('')
+          }}
+        >
+          Atribuir Mesa
         </Button>
-      </form>
+      </div>
 
       <div className="rounded-xl border border-border/40 bg-surface">
         <div className="border-b border-border/40 p-5">

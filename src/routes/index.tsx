@@ -31,6 +31,7 @@ const LoginPage = lazy(() => import('@/pages/public/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/public/RegisterPage'))
 const ScannerPage = lazy(() => import('@/pages/staff/ScannerPage'))
 const EventsPage = lazy(() => import('@/pages/public/EventsPage'))
+const EventDetailPage = lazy(() => import('@/pages/client/EventDetailPage'))
 // ─── Páginas do cliente ───────────────────────────────────────────────────────
 const ClientDashboardPage = lazy(() => import('@/pages/client/ClientDashboardPage'))
 const ClientReservationsPage = lazy(() => import('@/pages/client/ClientReservationsPage'))
@@ -75,6 +76,7 @@ export const router = createBrowserRouter([
         path: '/rececionista',
         element: wrap(RecepcionistaPage),
       },
+      { path: 'eventos/:id', element: wrap(EventDetailPage) },
     ],
   },
   {
