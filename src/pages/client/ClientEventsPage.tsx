@@ -253,8 +253,20 @@ function TicketSales() {
   const visibleEvents = publishedEvents.filter((e: any) => e.published)
   const [selectedEventId, setSelectedEventId] = useState<number | null>(visibleEvents[0]?.id ?? null)
   const [selectedSeat, setSelectedSeat] = useState<any>(null)
+  const [showPriceModal, setShowPriceModal] = useState(false)
+  const [selectedType, setSelectedType] = useState<string | null>(null)
   const selectedEvent = visibleEvents.find((e: any) => e.id === selectedEventId) ?? visibleEvents[0]
 
+  const priceOptions = selectedEvent ? [
+    { key: 'individual', label: 'Individual', price: selectedEvent.priceIndividual },
+    { key: 'mesa', label: 'Mesa s/ consumo', price: selectedEvent.priceTable },
+    { key: 'mesa_consumo', label: 'Mesa c/ consumo', price: selectedEvent.priceTableWithConsumption },
+    { key: 'box', label: 'Box s/ consumo', price: selectedEvent.priceBox },
+    { key: 'box_consumo', label: 'Box c/ consumo', price: selectedEvent.priceBoxWithConsumption },
+    { key: 'vip_individual', label: 'VIP Individual', price: selectedEvent.priceVipIndividual },
+    { key: 'vip_mesa', label: 'VIP Mesa', price: selectedEvent.priceVipTable },
+    { key: 'vip_box', label: 'VIP Box', price: selectedEvent.priceVipBox },
+  ].filter(o => o.price > 0) : []
   function handleBuy() {
     if (!user || !selectedEvent || !selectedSeat) return
     buyTicketMutation.mutate({ eventId: selectedEvent.id, seatId: selectedSeat.id })
@@ -304,7 +316,11 @@ function TicketSales() {
                   })),
                 }}
                 selectedSeatId={selectedSeat ? String(selectedSeat.id) : undefined}
-                onSelect={(seat) => setSelectedSeat({ id: Number(seat.id), tableNumber: seat.tableNumber, price: seat.price })}
+                onSelect={(seat) => {
+                  setSelectedSeat({ id: Number(seat.id), tableNumber: seat.tableNumber, price: seat.price })
+                  setSelectedType(null)
+                  setShowPriceModal(true)
+                }}
               />
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4">
                 <div>
@@ -359,6 +375,34 @@ function TicketSales() {
                 phone={user?.phone}
               />
             ))}
+          </div>
+        </div>
+      )}
+      {showPriceModal && selectedSeat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-background shadow-xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-xl text-primary">Mesa {selectedSeat.tableNumber}</h3>
+              <button onClick={() => setShowPriceModal(false)} className="text-muted-foreground hover:text-foreground text-xl">×</button>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Seleciona o tipo de entrada</p>
+              <div className="grid grid-cols-2 gap-2">
+                {priceOptions.map(option => (
+                  <button key={option.key} onClick={() => setSelectedType(option.key)}
+                    className={cn('rounded-lg border p-3 text-left transition-colors',
+                      selectedType === option.key ? 'border-primary bg-primary/10' : 'border-border bg-surface hover:border-primary/50')}>
+                    <p className="text-xs text-muted-foreground">{option.label}</p>
+                    <p className="text-sm font-semibold mt-0.5" style={{ color: '#B89A67' }}>{formatCurrency(option.price)}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button onClick={() => setShowPriceModal(false)} disabled={!selectedType}
+              className="w-full py-3 rounded-md text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: '#D9D0B5', color: '#181818' }}>
+              OK
+            </button>
           </div>
         </div>
       )}
