@@ -94,6 +94,7 @@ export interface DigitalTicket {
   seatId: string
   tableNumber: number
   price: number
+  ticketType?: string
   qrCode: string
   whatsappUrl?: string
   deliveryStatus?: 'pending' | 'sent'

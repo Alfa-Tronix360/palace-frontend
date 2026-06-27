@@ -241,7 +241,12 @@ function TicketSales() {
 
   const buyTicketMutation = useMutation({
     mutationFn: ({ eventId, seatId }: { eventId: number; seatId: number }) =>
-      http.post<unknown, any>('/tickets/purchase', { event_id: eventId, seat_id: seatId }),
+      http.post<unknown, any>('/tickets/purchase', {
+        event_id: eventId,
+        seat_id: seatId,
+        ticket_type: selectedType,
+        ticket_price: priceOptions.find(o => o.key === selectedType)?.price,
+      }),
     onSuccess: () => {
       refetchTickets()
       toast.success('Convite comprado com sucesso!')
@@ -357,7 +362,7 @@ function TicketSales() {
                   clientName: ticket.clientName,
                   clientPhone: ticket.clientPhone,
                   seatId: String(ticket.seatId),
-                  tableNumber: ticket.tableNumber,
+                  tableNumber: ticket.tableNumber ?? ticket.table_number,
                   price: ticket.price,
                   qrCode: ticket.qrCode,
                   whatsappUrl: ticket.whatsappUrl,
@@ -430,6 +435,9 @@ function DigitalTicketCard({ ticket, events, phone }: { ticket: DigitalTicket; e
           <p className="mt-1 text-sm text-muted-foreground">
             Mesa {ticket.tableNumber} | {formatCurrency(ticket.price)}
           </p>
+          {ticket.ticketType && (
+            <p className="text-xs text-accent mt-0.5">{ticket.ticketType}</p>
+          )}
         </div>
         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-background text-primary">
           <QrCode className="h-7 w-7" />
