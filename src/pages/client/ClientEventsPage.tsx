@@ -364,6 +364,7 @@ function TicketSales() {
                   seatId: String(ticket.seatId),
                   tableNumber: ticket.tableNumber ?? ticket.table_number,
                   price: ticket.price,
+                  ticketType: ticket.ticketType ?? ticket.ticket_type,
                   qrCode: ticket.qrCode,
                   whatsappUrl: ticket.whatsappUrl,
                   deliveryStatus: ticket.deliveryStatus,
