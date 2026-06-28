@@ -132,9 +132,11 @@ export default function MenuPage() {
                 title={selected.name}
                 price={formatCurrency(selected.price)}
                 description={selected.description}
-                images={selected.imageUrl
-                  ? [{ src: selected.imageUrl, alt: selected.name }]
-                  : (itemImages[selected.id] ?? ['/images/gallery-01.png']).map(src => ({ src, alt: selected.name }))}
+                images={[
+                  ...(selected.imageUrl ? [{ src: selected.imageUrl, alt: selected.name }] : []),
+                  ...(selected.images ?? []).map((src: string) => ({ src, alt: selected.name })),
+                  ...((selected.imageUrl || (selected.images?.length ?? 0) > 0) ? [] : (itemImages[selected.id] ?? ['/images/gallery-01.png']).map((src: string) => ({ src, alt: selected.name }))),
+                ]}
               />
               <button
                 onClick={() => setSelectedId(null)}
