@@ -233,6 +233,7 @@ export interface MenuItem {
   category: MenuCategory
   price: number
   imageUrl?: string
+  images?: string[]
   available: boolean
   featured: boolean
   allergens?: string[]
