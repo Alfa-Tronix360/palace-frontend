@@ -33,6 +33,8 @@ export default function AdminMenuPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
   const [uploading, setUploading] = useState(false)
+  const [extraImages, setExtraImages] = useState<string[]>([])
+  const [uploadingExtra, setUploadingExtra] = useState(false)
 
   const { data: menu = [] } = useQuery({
     queryKey: ['menu'],
@@ -71,6 +73,7 @@ export default function AdminMenuPage() {
   }
 
   function handleEdit(item: MenuItem) {
+    setExtraImages(item.images ?? [])
     setEditItem(item)
     setForm({
       name: item.name,
@@ -114,6 +117,7 @@ export default function AdminMenuPage() {
       allergens: form.allergens
         ? form.allergens.split(',').map(a => a.trim()).filter(Boolean)
         : [],
+      images: extraImages,
     }
 
     if (editItem) {
@@ -130,6 +134,7 @@ export default function AdminMenuPage() {
   }
 
   function handleClose() {
+    setExtraImages([])
     setOpen(false)
     setEditItem(null)
     setForm(EMPTY_FORM)
@@ -247,6 +252,44 @@ export default function AdminMenuPage() {
               {imagePreview && (
                 <img src={imagePreview} alt="Preview" className="mt-2 h-24 rounded-md object-cover" />
               )}
+
+              <div>
+                <label className="text-sm font-medium">Imagens adicionais</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files ?? [])
+                    if (!files.length) return
+                    setUploadingExtra(true)
+                    try {
+                      const urls = await Promise.all(files.map(uploadImage))
+                      setExtraImages(prev => [...prev, ...urls])
+                    } catch {
+                      console.error('Erro ao carregar imagens')
+                    }
+                    setUploadingExtra(false)
+                  }}
+                  className="w-full mt-1 rounded-md border border-border bg-background p-2 text-sm"
+                />
+                {uploadingExtra && <p className="text-xs text-muted-foreground mt-1">A carregar...</p>}
+                {extraImages.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {extraImages.map((url, i) => (
+                      <div key={i} className="relative">
+                        <img src={url} alt={`Extra ${i}`} className="h-16 w-16 rounded-md object-cover" />
+                        <button type="button"
+                          onClick={() => setExtraImages(prev => prev.filter((_, idx) => idx !== i))}
+                          className="absolute -top-1 -right-1 w-4 h-4 bg-danger text-white rounded-full text-xs flex items-center justify-center">
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
             </div>
 
             <div>
