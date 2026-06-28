@@ -12,9 +12,9 @@ import { http } from '@/services/api/http'
 import type { TableStatus } from '@/types'
 
 const tableStatusClass: Record<TableStatus, string> = {
-  available: 'border-danger bg-danger/15 text-danger',
+  available: 'border-success bg-success/15 text-success',
   reserved: 'border-warning bg-warning/15 text-warning',
-  occupied: 'border-success bg-success/15 text-success',
+  occupied: 'border-danger bg-danger/15 text-danger',
   maintenance: 'border-border bg-muted text-muted-foreground',
 }
 
