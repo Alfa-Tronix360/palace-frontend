@@ -132,7 +132,9 @@ export default function MenuPage() {
                 title={selected.name}
                 price={formatCurrency(selected.price)}
                 description={selected.description}
-                images={(itemImages[selected.id] ?? ['/images/gallery-01.png']).map(src => ({ src, alt: selected.name }))}
+                images={selected.imageUrl
+                  ? [{ src: selected.imageUrl, alt: selected.name }]
+                  : (itemImages[selected.id] ?? ['/images/gallery-01.png']).map(src => ({ src, alt: selected.name }))}
               />
               <button
                 onClick={() => setSelectedId(null)}
@@ -166,7 +168,7 @@ export default function MenuPage() {
                 {/* Image */}
                 <div className="relative h-44 overflow-hidden bg-muted">
                   <img
-                    src={(itemImages[item.id] ?? ['/images/gallery-01.png'])[0]}
+                    src={item.imageUrl ?? (itemImages[item.id] ?? ['/images/gallery-01.png'])[0]}
                     alt={item.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
