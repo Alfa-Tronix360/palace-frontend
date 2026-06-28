@@ -437,7 +437,18 @@ function DigitalTicketCard({ ticket, events, phone }: { ticket: DigitalTicket; e
             Mesa {ticket.tableNumber} | {formatCurrency(ticket.price)}
           </p>
           {ticket.ticketType && (
-            <p className="text-xs text-accent mt-0.5">{ticket.ticketType}</p>
+            <p className="text-xs text-accent mt-0.5">
+              {{
+                'individual': 'Individual',
+                'mesa': 'Mesa s/ consumo',
+                'mesa_consumo': 'Mesa c/ consumo',
+                'box': 'Box s/ consumo',
+                'box_consumo': 'Box c/ consumo',
+                'vip_individual': 'VIP Individual',
+                'vip_mesa': 'VIP Mesa',
+                'vip_box': 'VIP Box',
+              }[ticket.ticketType] ?? ticket.ticketType}
+            </p>
           )}
         </div>
         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-background text-primary">
