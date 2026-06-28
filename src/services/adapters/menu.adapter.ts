@@ -9,6 +9,7 @@ function normalizeMenuItem(item: any): MenuItem {
     category: item.category as MenuCategory,
     price: item.price,
     imageUrl: item.imageUrl || item.image_url,
+    images: item.images || [],
     available: item.available,
     featured: item.featured,
     allergens: item.allergens || [],
@@ -22,7 +23,7 @@ export const menuAdapter = {
     return data.map(normalizeMenuItem)
   },
 
-  async create(data: { name: string; description: string; category: string; price: number; available: boolean; featured: boolean; imageUrl?: string; allergens?: string[] }): Promise<MenuItem> {
+  async create(data: { name: string; description: string; category: string; price: number; available: boolean; featured: boolean; imageUrl?: string; allergens?: string[]; images?: string[] }): Promise<MenuItem> {
     const item = await http.post<unknown, any>('/menu', {
       name: data.name,
       description: data.description,
@@ -32,6 +33,7 @@ export const menuAdapter = {
       featured: data.featured,
       image_url: data.imageUrl,
       allergens: data.allergens || [],
+      images: data.images || [],
     })
     return normalizeMenuItem(item)
   },
@@ -46,6 +48,7 @@ export const menuAdapter = {
       featured: data.featured,
       image_url: data.imageUrl,
       allergens: data.allergens || [],
+      images: data.images || [],
     })
     return normalizeMenuItem(item)
   },
