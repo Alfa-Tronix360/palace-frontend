@@ -5,6 +5,7 @@ import { http } from '@/services/api/http'
 import { UtensilsCrossed, Wine, Users } from 'lucide-react'
 import { ROUTES } from '@/lib/constants'
 import { Link } from 'react-router-dom'
+import { PhoneReservation } from '@/components/forms/PhoneReservation'
 
 export default function OperacionalDashboardPage() {
     const user = useAuthStore((state) => state.user)
@@ -72,6 +73,9 @@ export default function OperacionalDashboardPage() {
                     <p className="text-sm text-muted-foreground mt-1">Ver e gerir a equipa do turno.</p>
                 </Link>
             </div>
+            {user?.role === 'chefe_sala' && (
+                <PhoneReservation />
+            )}
         </div>
     )
 }
