@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ReservationsTable } from '@/features/admin-reservations/components/ReservationsTable'
 import { CreateReservationDialog } from '@/features/admin-reservations/components/CreateReservationDialog'
 import { reservationsAdapter } from '@/services/adapters/reservations.adapter'
+import { PhoneReservation } from '@/components/forms/PhoneReservation'
 
 export default function AdminReservationsPage() {
   const { data: reservations = [] } = useQuery({
@@ -35,7 +36,7 @@ export default function AdminReservationsPage() {
           </div>
         ))}
       </div>
-
+      <PhoneReservation />
       <ReservationsTable />
     </div>
   )
