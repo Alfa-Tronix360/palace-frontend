@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X } from 'lucide-react'
 import Fuse from 'fuse.js'
-import { mockMenu } from '@/data'
+import { useQuery } from '@tanstack/react-query'
+import { http } from '@/services/api/http'
 import { MENU_CATEGORY_LABELS } from '@/lib/constants'
 import { formatCurrency, cn } from '@/lib/utils'
 import { ProductImageCard } from '@/components/ui/product-image-card'
@@ -11,15 +12,15 @@ import type { MenuCategory } from '@/types'
 
 /* ── Image map — cada item usa uma das imagens da galeria ───────────────── */
 const itemImages: Record<string, string[]> = {
-  'mi-1':  ['/images/gallery-05.png', '/images/gallery-06.png'],
-  'mi-2':  ['/images/gallery-06.png', '/images/gallery-07.png'],
-  'mi-3':  ['/images/gallery-07.png', '/images/gallery-08.png'],
-  'mi-4':  ['/images/gallery-08.png', '/images/gallery-05.png'],
-  'mi-5':  ['/images/gallery-09.png', '/images/gallery-10.png'],
-  'mi-6':  ['/images/gallery-10.png', '/images/gallery-11.png'],
-  'mi-7':  ['/images/gallery-11.png', '/images/gallery-09.png'],
-  'mi-8':  ['/images/gallery-12.png', '/images/gallery-13.png'],
-  'mi-9':  ['/images/gallery-13.png', '/images/gallery-14.png'],
+  'mi-1': ['/images/gallery-05.png', '/images/gallery-06.png'],
+  'mi-2': ['/images/gallery-06.png', '/images/gallery-07.png'],
+  'mi-3': ['/images/gallery-07.png', '/images/gallery-08.png'],
+  'mi-4': ['/images/gallery-08.png', '/images/gallery-05.png'],
+  'mi-5': ['/images/gallery-09.png', '/images/gallery-10.png'],
+  'mi-6': ['/images/gallery-10.png', '/images/gallery-11.png'],
+  'mi-7': ['/images/gallery-11.png', '/images/gallery-09.png'],
+  'mi-8': ['/images/gallery-12.png', '/images/gallery-13.png'],
+  'mi-9': ['/images/gallery-13.png', '/images/gallery-14.png'],
   'mi-10': ['/images/gallery-14.png', '/images/gallery-15.png'],
   'mi-11': ['/images/gallery-15.png', '/images/gallery-13.png'],
   'mi-12': ['/images/gallery-01.png'],
@@ -35,27 +36,31 @@ const itemImages: Record<string, string[]> = {
 
 const categories = Object.keys(MENU_CATEGORY_LABELS) as MenuCategory[]
 
-const fuse = new Fuse(mockMenu, {
-  keys: ['name', 'description', 'category'],
-  threshold: 0.35,
-})
-
 export default function MenuPage() {
+  const { data: menuItems = [] } = useQuery({
+    queryKey: ['public-menu'],
+    queryFn: () => http.get<unknown, any[]>('/menu'),
+  })
+
+  const fuse = new Fuse(menuItems, {
+    keys: ['name', 'description', 'category'],
+    threshold: 0.35,
+  })
   const [activeCategory, setActiveCategory] = useState<MenuCategory | 'all'>('all')
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
-    let items = mockMenu
+    let items = menuItems
     if (search.trim()) {
       items = fuse.search(search.trim()).map(r => r.item)
     } else if (activeCategory !== 'all') {
-      items = mockMenu.filter(i => i.category === activeCategory)
+      items = menuItems.filter(i => i.category === activeCategory)
     }
     return items
   }, [search, activeCategory])
 
-  const selected = selectedId ? mockMenu.find(i => i.id === selectedId) : null
+  const selected = selectedId ? menuItems.find(i => i.id === selectedId) : null
 
   return (
     <div className="min-h-screen bg-background">
