@@ -386,11 +386,11 @@ function VenueAreasSection({
               <div className="flex gap-2">
                 <Button type="button" className="flex-1" onClick={async () => {
                   await http.post('/venue/tables', {
-                    number: tables.length + 1,
+                    number: (tables.length + 1),
                     capacity: 4,
                     location: 'indoor',
                     status: 'available',
-                    area_id: selectedArea.id,
+                    areaId: Number(selectedArea.id),
                     x: 50,
                     y: 50,
                   })
