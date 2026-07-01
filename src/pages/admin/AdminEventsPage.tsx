@@ -384,16 +384,8 @@ function VenueAreasSection({
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
               </label>
               <div className="flex gap-2">
-                <Button type="button" className="flex-1" onClick={async () => {
-                  await http.post('/venue/tables', {
-                    capacity: 4,
-                    location: 'indoor',
-                    status: 'available',
-                    areaId: Number(selectedArea.id),
-                    x: 50,
-                    y: 50,
-                  })
-                  await queryClient.invalidateQueries({ queryKey: ['tables'] })
+                <Button type="button" className="flex-1" onClick={() => {
+                  addTable(selectedArea.id)
                   toast.success('Mesa criada!')
                 }}>
                   <Plus className="h-4 w-4" /> Mesa
