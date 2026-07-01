@@ -301,6 +301,7 @@ function VenueAreasSection({
 }) {
   const areas = useVenueStore((state) => state.areas)
   const tables = useVenueStore((state) => state.tables)
+  const queryClient = useQueryClient()
   const addArea = useVenueStore((state) => state.addArea)
   const updateArea = useVenueStore((state) => state.updateArea)
   const deleteArea = useVenueStore((state) => state.deleteArea)
@@ -384,7 +385,10 @@ function VenueAreasSection({
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
               </label>
               <div className="flex gap-2">
-                <Button type="button" className="flex-1" onClick={() => addTable(selectedArea.id)}>
+                <Button type="button" className="flex-1" onClick={async () => {
+                  addTable(selectedArea.id)
+                  await queryClient.invalidateQueries({ queryKey: ['tables'] })
+                }}>
                   <Plus className="h-4 w-4" /> Mesa
                 </Button>
                 <Button type="button" variant="outline" onClick={() => deleteArea(selectedArea.id)}>
