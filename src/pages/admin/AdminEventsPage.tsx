@@ -484,8 +484,12 @@ function EventSeatMap({ eventId }: { eventId: string }) {
   const queryClient = useQueryClient()
   const { data: areas = [] } = useQuery({
     queryKey: ['areas'],
-    queryFn: () => http.get<unknown, any[]>('/venue/areas'),
+    queryFn: async () => {
+      const data = await http.get<unknown, any[]>('/venue/areas')
+      return data.map((a: any) => ({ ...a, id: String(a.id) }))
+    },
   })
+
   const { data: seats = [] } = useQuery({
     queryKey: ['event-seats', eventId],
     queryFn: () => ticketsAdapter.getEventSeats(eventId),
