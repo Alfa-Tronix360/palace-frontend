@@ -34,18 +34,16 @@ function StatCard({ label, value, className }: { label: string; value: number; c
 }
 
 export default function AdminTablesPage() {
-  const tables = useVenueStore((state) => state.tables)
+  const { data: tables = [] } = useQuery({
+    queryKey: ['tables'],
+    queryFn: () => tablesAdapter.getAll(),
+  })
   const removeTable = useVenueStore((state) => state.removeTable)
   const queryClient = useQueryClient()
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => employeesAdapter.getAll(),
-  })
-
-  const { data: apiTables = [] } = useQuery({
-    queryKey: ['tables'],
-    queryFn: () => tablesAdapter.getAll(),
   })
 
   const [orderEmployeeId, setOrderEmployeeId] = useState('')
