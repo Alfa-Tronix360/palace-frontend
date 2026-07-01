@@ -188,7 +188,7 @@ export default function AdminTablesPage() {
             <select value={orderEmployeeId} onChange={(e) => {
               const emp = employees.find((item) => item.id === e.target.value)
               setOrderEmployeeId(e.target.value)
-              setOrderTableId(emp?.tableId || apiTables[0]?.id || '')
+              setOrderTableId(emp?.tableId || tables[0]?.id || '')
             }} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
               <option value="">Selecione</option>
               {employees.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
@@ -197,7 +197,7 @@ export default function AdminTablesPage() {
           <div className="block space-y-2 md:col-span-2">
             <span className="text-sm font-medium">Mesas</span>
             <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto border border-input rounded-md p-3 bg-background">
-              {apiTables.map((t) => (
+              {tables.map((t) => (
                 <label key={t.id} className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -288,7 +288,7 @@ export default function AdminTablesPage() {
             <div className="space-y-2">
               <span className="text-sm font-medium">Mesas atribuidas</span>
               <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
-                {apiTables.map((t) => {
+                {tables.map((t) => {
                   const assigned = editingEmployee.assignedTables?.some((at: any) => at.tableId === t.id)
                   return (
                     <label key={t.id} className="flex items-center gap-2 cursor-pointer">
