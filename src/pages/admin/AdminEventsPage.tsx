@@ -386,7 +386,7 @@ function VenueAreasSection({
               <div className="flex gap-2">
                 <Button type="button" className="flex-1" onClick={async () => {
                   await http.post('/venue/tables', {
-                    number: (tables.length + 1),
+                    number: (tables.reduce((max: number, t: any) => Math.max(max, Number(t.number)), 0) + 1),
                     capacity: 4,
                     location: 'indoor',
                     status: 'available',
