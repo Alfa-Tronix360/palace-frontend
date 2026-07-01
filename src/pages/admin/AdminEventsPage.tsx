@@ -482,7 +482,10 @@ function VenueAreasSection({
 
 function EventSeatMap({ eventId }: { eventId: string }) {
   const queryClient = useQueryClient()
-  const areas = useVenueStore((state) => state.areas)
+  const { data: areas = [] } = useQuery({
+    queryKey: ['areas'],
+    queryFn: () => http.get<unknown, any[]>('/venue/areas'),
+  })
   const { data: seats = [] } = useQuery({
     queryKey: ['event-seats', eventId],
     queryFn: () => ticketsAdapter.getEventSeats(eventId),
