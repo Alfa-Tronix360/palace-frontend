@@ -386,8 +386,17 @@ function VenueAreasSection({
               </label>
               <div className="flex gap-2">
                 <Button type="button" className="flex-1" onClick={async () => {
-                  addTable(selectedArea.id)
+                  await http.post('/venue/tables', {
+                    number: tables.length + 1,
+                    capacity: 4,
+                    location: 'indoor',
+                    status: 'available',
+                    area_id: selectedArea.id,
+                    x: 50,
+                    y: 50,
+                  })
                   await queryClient.invalidateQueries({ queryKey: ['tables'] })
+                  toast.success('Mesa criada!')
                 }}>
                   <Plus className="h-4 w-4" /> Mesa
                 </Button>
