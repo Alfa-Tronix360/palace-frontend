@@ -301,11 +301,11 @@ function VenueAreasSection({
 }) {
   const areas = useVenueStore((state) => state.areas)
   const tables = useVenueStore((state) => state.tables)
-  const queryClient = useQueryClient()
   const addArea = useVenueStore((state) => state.addArea)
   const updateArea = useVenueStore((state) => state.updateArea)
   const deleteArea = useVenueStore((state) => state.deleteArea)
   const mergeAreas = useVenueStore((state) => state.mergeAreas)
+  const addTable = useVenueStore((state) => state.addTable)
   const updateTable = useVenueStore((state) => state.updateTable)
   const [mergeAreaId, setMergeAreaId] = useState('')
   const selected = tables.find((table) => table.id === selectedTableId) ?? tables[0]
@@ -384,10 +384,7 @@ function VenueAreasSection({
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
               </label>
               <div className="flex gap-2">
-                <Button type="button" className="flex-1" onClick={() => {
-                  addTable(selectedArea.id)
-                  toast.success('Mesa criada!')
-                }}>
+                <Button type="button" className="flex-1" onClick={() => addTable(selectedArea.id)}>
                   <Plus className="h-4 w-4" /> Mesa
                 </Button>
                 <Button type="button" variant="outline" onClick={() => deleteArea(selectedArea.id)}>
@@ -473,14 +470,7 @@ function VenueAreasSection({
 
 function EventSeatMap({ eventId }: { eventId: string }) {
   const queryClient = useQueryClient()
-  const { data: areas = [] } = useQuery({
-    queryKey: ['areas'],
-    queryFn: async () => {
-      const data = await http.get<unknown, any[]>('/venue/areas')
-      return data.map((a: any) => ({ ...a, id: String(a.id) }))
-    },
-  })
-
+  const areas = useVenueStore((state) => state.areas)
   const { data: seats = [] } = useQuery({
     queryKey: ['event-seats', eventId],
     queryFn: () => ticketsAdapter.getEventSeats(eventId),
