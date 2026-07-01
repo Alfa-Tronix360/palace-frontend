@@ -306,7 +306,6 @@ function VenueAreasSection({
   const updateArea = useVenueStore((state) => state.updateArea)
   const deleteArea = useVenueStore((state) => state.deleteArea)
   const mergeAreas = useVenueStore((state) => state.mergeAreas)
-  const addTable = useVenueStore((state) => state.addTable)
   const updateTable = useVenueStore((state) => state.updateTable)
   const [mergeAreaId, setMergeAreaId] = useState('')
   const selected = tables.find((table) => table.id === selectedTableId) ?? tables[0]
