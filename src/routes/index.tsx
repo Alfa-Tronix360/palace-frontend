@@ -72,10 +72,6 @@ export const router = createBrowserRouter([
       { path: 'login', element: wrap(LoginPage) },
       { path: 'registo', element: wrap(RegisterPage) },
       { path: 'eventos', element: wrap(EventsPage) },
-      {
-        path: '/rececionista',
-        element: wrap(RecepcionistaPage),
-      },
       { path: 'eventos/:id', element: wrap(EventDetailPage) },
     ],
   },
@@ -107,6 +103,14 @@ export const router = createBrowserRouter([
       { path: 'imagens', element: wrap(AdminImagesPage) },
       { path: 'pagamentos', element: wrap(AdminPaymentsPage) },
       { path: 'relatorios', element: wrap(AdminReportsPage) },
+
+    ],
+  },
+  {
+    path: '/rececionista',
+    element: <AdminLayout />,
+    children: [
+      { index: true, element: wrap(RecepcionistaPage) },
     ],
   },
 
