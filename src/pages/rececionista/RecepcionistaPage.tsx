@@ -1,196 +1,212 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Phone, Plus, Calendar, Search } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Phone, Search, Calendar, Users, CheckCircle, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { reservationsAdapter } from '@/services/adapters/reservations.adapter'
-import { tablesAdapter } from '@/services/adapters/tables.adapter'
 import { http } from '@/services/api/http'
+import { reservationsAdapter } from '@/services/adapters/reservations.adapter'
+import { PhoneReservation } from '@/components/forms/PhoneReservation'
 import { toast } from 'sonner'
+import { cn, formatDate } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
-import { useNavigate } from 'react-router-dom'
 
+type Tab = 'dashboard' | 'reservas' | 'hospedes' | 'telefone'
 
 export default function RecepcionistaPage() {
-    const queryClient = useQueryClient()
-    const [name, setName] = useState('')
-    const [phone, setPhone] = useState('')
-    const [clientId, setClientId] = useState('')
-    const [clientFound, setClientFound] = useState<any | null>(null)
-    const [date, setDate] = useState('')
-    const [time, setTime] = useState('19:00')
-    const [guests, setGuests] = useState(2)
-    const [tableId, setTableId] = useState('')
-    const [notes, setNotes] = useState('')
-    const logout = useAuthStore(s => s.logout)
-    const navigate = useNavigate()
+    const user = useAuthStore(s => s.user)
+    const [activeTab, setActiveTab] = useState<Tab>('dashboard')
+
+    const tabs = [
+        { id: 'dashboard', label: 'Dashboard', icon: Calendar },
+        { id: 'reservas', label: 'Reservas', icon: CheckCircle },
+        { id: 'hospedes', label: 'Hóspedes', icon: Users },
+        { id: 'telefone', label: 'Reserva Tel.', icon: Phone },
+    ] as const
+
+    return (
+        <div className="space-y-6">
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                <p className="text-xs tracking-[0.25em] uppercase mb-1" style={{ color: '#B89A67' }}>Rececionista</p>
+                <h1 className="font-display text-3xl text-primary">Bom trabalho, {user?.name?.split(' ')[0]}!</h1>
+            </motion.div>
+
+            {/* Tabs */}
+            <div className="flex gap-2 border-b border-border overflow-x-auto pb-0">
+                {tabs.map(tab => (
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id as Tab)}
+                        className={cn('flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                            activeTab === tab.id
+                                ? 'border-primary text-primary'
+                                : 'border-transparent text-muted-foreground hover:text-foreground'
+                        )}>
+                        <tab.icon className="w-4 h-4" />
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
+            {activeTab === 'dashboard' && <DashboardTab />}
+            {activeTab === 'reservas' && <ReservasTab />}
+            {activeTab === 'hospedes' && <HospedesTab />}
+            {activeTab === 'telefone' && <TelefoneTab />}
+        </div>
+    )
+}
+
+function DashboardTab() {
     const { data: reservations = [] } = useQuery({
         queryKey: ['reservations'],
         queryFn: () => reservationsAdapter.getAll(),
     })
 
-    const { data: tables = [] } = useQuery({
-        queryKey: ['tables'],
-        queryFn: () => tablesAdapter.getAll(),
-    })
+    const today = new Date().toDateString()
+    const todayReservations = reservations.filter(r => new Date(r.date).toDateString() === today)
+    const confirmed = todayReservations.filter(r => r.status === 'confirmed')
+    const pending = todayReservations.filter(r => r.status === 'pending')
+    const cancelled = todayReservations.filter(r => r.status === 'cancelled')
 
-    const findClientMutation = useMutation({
-        mutationFn: () => http.post<unknown, any>('/clients/find-or-create', { name, phone }),
-        onSuccess: (client) => {
-            setClientId(client.id)
-            setClientFound(client)
-            toast.success(client.reservationCount > 0 ? `Cliente encontrado: ${client.name}` : `Novo cliente criado: ${client.name}`)
-        },
-        onError: () => toast.error('Erro ao verificar cliente.'),
-    })
-
-    const createMutation = useMutation({
-        mutationFn: () => reservationsAdapter.create({
-            clientId,
-            tableId,
-            date: new Date(date),
-            time,
-            guests,
-            notes: notes ? `Reserva por telefone. ${notes}` : 'Reserva por telefone.',
-        }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['reservations'] })
-            setName(''); setPhone(''); setDate(''); setTime('19:00')
-            setGuests(2); setTableId(''); setNotes('')
-            setClientId(''); setClientFound(null)
-            toast.success('Reserva criada com sucesso!')
-        },
-        onError: () => toast.error('Erro ao criar reserva.'),
-    })
-
-    const todayReservations = reservations.filter(r => {
-        const today = new Date()
-        const rDate = new Date(r.date)
-        return (
-            rDate.getFullYear() === today.getFullYear() &&
-            rDate.getMonth() === today.getMonth() &&
-            rDate.getDate() === today.getDate()
-        )
-    })
+    const stats = [
+        { label: 'Reservas hoje', value: todayReservations.length, color: 'text-primary' },
+        { label: 'Confirmadas', value: confirmed.length, color: 'text-success' },
+        { label: 'Pendentes', value: pending.length, color: 'text-warning' },
+        { label: 'Canceladas', value: cancelled.length, color: 'text-danger' },
+    ]
 
     return (
-        <div className="min-h-screen bg-background p-6 space-y-6">
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
-                <div>
-                    <p className="text-xs tracking-[0.25em] uppercase mb-1" style={{ color: '#B89A67' }}>Receção</p>
-                    <h1 className="font-display text-3xl text-primary">Painel do Rececionista</h1>
-                    <p className="text-muted-foreground text-sm mt-1">Registe reservas por telefone e acompanhe as reservas do dia.</p>
-                </div>
-                <button onClick={() => { logout(); navigate('/login') }}
-                    className="text-sm text-muted-foreground hover:text-foreground border border-border rounded-md px-3 py-2 transition-colors">
-                    Terminar sessão
-                </button>
-            </motion.div>
-
-            <div className="grid gap-6 xl:grid-cols-2">
-                <div className="rounded-xl border border-border bg-surface p-5 space-y-4">
-                    <div className="flex items-center gap-2">
-                        <Phone className="h-5 w-5 text-primary" />
-                        <h2 className="font-semibold">Nova Reserva por Telefone</h2>
+        <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {stats.map(s => (
+                    <div key={s.label} className="rounded-xl border border-border bg-surface p-4 text-center">
+                        <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
                     </div>
+                ))}
+            </div>
 
-                    {/* Passo 1 — Identificar cliente */}
-                    <div className="rounded-lg border border-border bg-background p-4 space-y-3">
-                        <p className="text-sm font-medium">1. Identificar cliente</p>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                            <label className="block space-y-2">
-                                <span className="text-sm text-muted-foreground">Nome</span>
-                                <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: João Silva"
-                                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-                            </label>
-                            <label className="block space-y-2">
-                                <span className="text-sm text-muted-foreground">Telefone</span>
-                                <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+244 9XX XXX XXX"
-                                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-                            </label>
-                        </div>
-                        <Button type="button" variant="outline" className="w-full"
-                            onClick={() => findClientMutation.mutate()}
-                            disabled={!name || !phone || findClientMutation.isPending}>
-                            <Search className="h-4 w-4" />
-                            {findClientMutation.isPending ? 'A verificar...' : 'Verificar cliente'}
-                        </Button>
-                        {clientFound && (
-                            <div className="rounded-md bg-success/10 border border-success/30 p-3 text-sm">
-                                <p className="font-medium text-success">✓ {clientFound.name}</p>
-                                <p className="text-muted-foreground text-xs">{clientFound.phone} | {clientFound.reservationCount} reserva(s)</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Passo 2 — Detalhes da reserva */}
-                    {clientFound && (
-                        <div className="rounded-lg border border-border bg-background p-4 space-y-3">
-                            <p className="text-sm font-medium">2. Detalhes da reserva</p>
-                            <div className="grid gap-3 sm:grid-cols-2">
-                                <label className="block space-y-2">
-                                    <span className="text-sm text-muted-foreground">Data</span>
-                                    <input type="date" value={date} onChange={e => setDate(e.target.value)}
-                                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-                                </label>
-                                <label className="block space-y-2">
-                                    <span className="text-sm text-muted-foreground">Hora</span>
-                                    <input type="time" value={time} onChange={e => setTime(e.target.value)}
-                                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-                                </label>
-                                <label className="block space-y-2">
-                                    <span className="text-sm text-muted-foreground">Nº de pessoas</span>
-                                    <input type="number" min={1} max={20} value={guests} onChange={e => setGuests(Number(e.target.value))}
-                                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-                                </label>
-                                <label className="block space-y-2">
-                                    <span className="text-sm text-muted-foreground">Mesa</span>
-                                    <select value={tableId} onChange={e => setTableId(e.target.value)}
-                                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-                                        <option value="">Selecionar mesa</option>
-                                        {tables.filter(t => t.status === 'available').map(t => (
-                                            <option key={t.id} value={t.id}>Mesa {t.number} ({t.capacity} lugares)</option>
-                                        ))}
-                                    </select>
-                                </label>
-                            </div>
-                            <label className="block space-y-2">
-                                <span className="text-sm text-muted-foreground">Notas</span>
-                                <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-                                    placeholder="Ex: aniversário, preferência de lugar..."
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
-                            </label>
-                            <Button onClick={() => createMutation.mutate()}
-                                disabled={!date || !tableId || createMutation.isPending}
-                                className="w-full">
-                                <Plus className="h-4 w-4" />
-                                {createMutation.isPending ? 'A criar...' : 'Criar Reserva'}
-                            </Button>
-                        </div>
-                    )}
-                </div>
-
-                <div className="rounded-xl border border-border bg-surface p-5 space-y-4">
-                    <div className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-primary" />
-                        <h2 className="font-semibold">Reservas de Hoje ({todayReservations.length})</h2>
-                    </div>
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {todayReservations.length ? todayReservations.map(r => (
-                            <div key={r.id} className="rounded-lg border border-border bg-background p-3">
-                                <div className="flex items-center justify-between">
-                                    <p className="font-medium text-sm">{r.clientName}</p>
-                                    <span className="text-xs text-muted-foreground">{r.time}</span>
+            <div className="rounded-xl border border-border bg-surface p-5">
+                <h2 className="font-semibold mb-4">Reservas de hoje</h2>
+                {todayReservations.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Sem reservas para hoje.</p>
+                ) : (
+                    <div className="space-y-2">
+                        {todayReservations.map(r => (
+                            <div key={r.id} className="flex items-center justify-between rounded-lg border border-border p-3">
+                                <div>
+                                    <p className="text-sm font-medium">{r.clientName}</p>
+                                    <p className="text-xs text-muted-foreground">{r.time} · {r.guests} pessoas · Mesa {r.tableNumber}</p>
                                 </div>
-                                <p className="text-xs text-muted-foreground mt-0.5">Mesa {r.tableNumber} | {r.guests} pessoas</p>
-                                {r.notes && <p className="text-xs text-accent mt-0.5">{r.notes}</p>}
+                                <span className={cn('text-xs px-2 py-1 rounded-full font-medium',
+                                    r.status === 'confirmed' ? 'bg-success/15 text-success' :
+                                        r.status === 'pending' ? 'bg-warning/15 text-warning' :
+                                            'bg-danger/15 text-danger')}>
+                                    {r.status === 'confirmed' ? 'Confirmada' : r.status === 'pending' ? 'Pendente' : 'Cancelada'}
+                                </span>
                             </div>
-                        )) : (
-                            <p className="text-sm text-muted-foreground">Nenhuma reserva para hoje.</p>
-                        )}
+                        ))}
                     </div>
-                </div>
+                )}
             </div>
         </div>
     )
+}
+
+function ReservasTab() {
+    const queryClient = useQueryClient()
+    const { data: reservations = [] } = useQuery({
+        queryKey: ['reservations'],
+        queryFn: () => reservationsAdapter.getAll(),
+    })
+
+    const updateMutation = useMutation({
+        mutationFn: ({ id, status }: { id: string; status: string }) =>
+            http.patch(`/reservations/${id}`, { status }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['reservations'] })
+            toast.success('Reserva atualizada!')
+        },
+    })
+
+    return (
+        <div className="space-y-4">
+            <h2 className="font-semibold">Todas as reservas</h2>
+            {reservations.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Sem reservas.</p>
+            ) : (
+                <div className="space-y-2">
+                    {reservations.map(r => (
+                        <div key={r.id} className="rounded-xl border border-border bg-surface p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-medium">{r.clientName}</p>
+                                    <p className="text-xs text-muted-foreground">{formatDate(new Date(r.date))} · {r.time} · {r.guests} pessoas · Mesa {r.tableNumber}</p>
+                                </div>
+                                <span className={cn('text-xs px-2 py-1 rounded-full font-medium',
+                                    r.status === 'confirmed' ? 'bg-success/15 text-success' :
+                                        r.status === 'pending' ? 'bg-warning/15 text-warning' :
+                                            'bg-danger/15 text-danger')}>
+                                    {r.status === 'confirmed' ? 'Confirmada' : r.status === 'pending' ? 'Pendente' : 'Cancelada'}
+                                </span>
+                            </div>
+                            {r.status === 'pending' && (
+                                <div className="flex gap-2">
+                                    <Button size="sm" className="flex-1"
+                                        onClick={() => updateMutation.mutate({ id: r.id, status: 'confirmed' })}>
+                                        <CheckCircle className="w-3 h-3" /> Confirmar
+                                    </Button>
+                                    <Button size="sm" variant="outline" className="flex-1"
+                                        onClick={() => updateMutation.mutate({ id: r.id, status: 'cancelled' })}>
+                                        <XCircle className="w-3 h-3" /> Cancelar
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    )
+}
+
+function HospedesTab() {
+    const [search, setSearch] = useState('')
+    const [phone, setPhone] = useState('')
+    const [clientFound, setClientFound] = useState<any | null>(null)
+
+    const findMutation = useMutation({
+        mutationFn: () => http.post<unknown, any>('/clients/find-or-create', { name: search, phone }),
+        onSuccess: (client) => {
+            setClientFound(client)
+            toast.success(`Cliente: ${client.name}`)
+        },
+        onError: () => toast.error('Cliente não encontrado.'),
+    })
+
+    return (
+        <div className="space-y-4">
+            <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
+                <h2 className="font-semibold">Pesquisar hóspede</h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Nome"
+                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+                    <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Telefone"
+                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+                </div>
+                <Button onClick={() => findMutation.mutate()} disabled={!search || !phone || findMutation.isPending} className="w-full">
+                    <Search className="w-4 h-4" /> Pesquisar
+                </Button>
+                {clientFound && (
+                    <div className="rounded-lg border border-success/30 bg-success/10 p-4 space-y-1">
+                        <p className="font-medium text-success">✓ {clientFound.name}</p>
+                        <p className="text-sm text-muted-foreground">{clientFound.phone}</p>
+                        <p className="text-sm text-muted-foreground">{clientFound.reservationCount} reserva(s)</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
+function TelefoneTab() {
+
+    return <PhoneReservation />
 }
